@@ -5,13 +5,11 @@ import lombok.Data;
 
 @Data
 @Builder
-public class UserResponseDto {
+public class UserUpdateRequest {
     private Long id;
     private String fullName;
-    private String username;
+    private String password;
     private String phoneNumber;
-    private String status;
-    private String role;
     private String identityCard;
     private String citizenId;
 }

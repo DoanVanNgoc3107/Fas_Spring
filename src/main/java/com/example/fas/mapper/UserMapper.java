@@ -4,6 +4,7 @@ import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.model.User;
 
 public class UserMapper {
+
     public static UserResponseDto toDto(User user) {
         if (user == null) {
             return null;

@@ -1,6 +1,5 @@
 package com.example.fas.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +21,7 @@ import java.time.Instant;
 public class User {
 
     public enum Status {
-        ACTIVE, BLOCKED, DELETED
+        ACTIVE, PENDING, DELETED
     }
 
     public enum Role {

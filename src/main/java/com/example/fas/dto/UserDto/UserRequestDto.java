@@ -4,8 +4,10 @@ import lombok.Data;
 
 @Data
 public class UserRequestDto {
-    private String fullName;
+    private String firstName;
+    private String lastName;
     private String username;
     private String password;
+    private String identityCard;
     private String phoneNumber;
 }
