@@ -10,7 +10,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.example.fas.enums.Status;
+import com.example.fas.enums.Role;
 import java.time.Instant;
+import java.util.Set;
 
 @Entity
 @Table(name = "`users`")
@@ -19,14 +22,6 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
-
-    public enum Status {
-        ACTIVE, PENDING, DELETED
-    }
-
-    public enum Role {
-        ADMIN, MANAGER, RESIDENT
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,9 +36,12 @@ public class User {
     private String username;
 
     @NotBlank(message = "Password can not be blank")
-    @Size(min = 8, max = 20, message = "Password must be between 8 and 20 characters")
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$"
+            , message = "Password must contain at least one uppercase letter, one lowercase letter, and one digit")
     private String password;
 
+    @NotNull(message = "Status cannot be null")
     @Enumerated(EnumType.STRING)
     private Status status;
 
@@ -54,13 +52,15 @@ public class User {
     @NotBlank(message = "Identity card can not be blank")
     private String identityCard;
 
-    @Column(unique = true, length = 12)
-    @Pattern(regexp = "^\\d{12}$", message = "Citizen ID (CCCD) must be exactly 12 digits")
+    @Column(unique = true, length = 10)
+    @Pattern(regexp = "^\\d{10}$", message = "Citizen ID must be exactly 10 digits")
     private String citizenId;
 
-    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$"
-            , message = "Invalid phone number")
+    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")
     private String phoneNumber;
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Room> rooms;
 
     @NotNull(message = "Creation timestamp cannot be null")
     private Instant createdAt;
@@ -81,7 +81,7 @@ public class User {
 
     public static String generateRandomAlphanumericIdentityCard() {
         StringBuilder sb = new StringBuilder();
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        String chars = "0123456789";
         for (int i = 0; i < 10; i++) {
             int randomIndex = (int) (Math.random() * chars.length());
             sb.append(chars.charAt(randomIndex));

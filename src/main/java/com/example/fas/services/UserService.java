@@ -1,13 +1,16 @@
 package com.example.fas.services;
 
+import com.example.fas.dto.UserDto.UserRequestDto;
+import com.example.fas.dto.UserDto.UserResponseDto;
+import com.example.fas.dto.UserDto.UserUpdateRequest;
 import com.example.fas.model.User;
 
 public interface UserService {
     // POST /users
-    User createUser(User user);
+    UserResponseDto createUser(UserRequestDto user);
 
     // PUT /users/{id}
-    User updateUser(Long id, User user);
+    User updateUser(Long id, UserUpdateRequest userUpdateRequest);
 
     // User updateUserByPhoneNumber(String phoneNumber, UserUpdateRequest userUpdateRequest);
 
@@ -18,7 +21,7 @@ public interface UserService {
     User hasAuthenticated(Long id);
 
     // GET /users/{id}
-    User getUserById(Long id);
+    UserResponseDto getUserById(Long id);
     
     User getUserByUsername(String username);
 
@@ -40,9 +43,11 @@ public interface UserService {
     void deleteUserByCitizenId(String citizenId);
 
     // Validate user details
-    void validateUser(User user);
+    void validateUser(UserRequestDto user);
 
-    void validateUpdateUser(User user);
+    void validateCitizenId(String citizenId);
+
+    void validateUpdateUser(UserUpdateRequest user);
 }
 
 
