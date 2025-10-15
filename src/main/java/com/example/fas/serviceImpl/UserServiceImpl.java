@@ -5,6 +5,8 @@ import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.dto.UserDto.UserUpdateRequest;
 import com.example.fas.enums.Role;
 import com.example.fas.enums.Status;
+import com.example.fas.exceptions.user.error.HadUserActiveException;
+import com.example.fas.exceptions.user.error.HadUserDeteleException;
 import com.example.fas.exceptions.user.exists.CitizenIdExistsException;
 import com.example.fas.exceptions.user.exists.IdentityCardExistsException;
 import com.example.fas.exceptions.user.exists.PhoneNumberExistsException;
@@ -20,6 +22,8 @@ import com.example.fas.model.User;
 import com.example.fas.repositories.UserRepository;
 import com.example.fas.services.UserService;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,12 +38,20 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
+            BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
     }
 
+    /*
+     * This function creates a new user in the system.
+     * 
+     * @param UserRequestDto dto - The user details for the new user.
+     * 
+     * @return UserResponseDto - The created user's details.
+     */
     @Override
     @Transactional
     public UserResponseDto createUser(UserRequestDto dto) {
@@ -50,11 +62,11 @@ public class UserServiceImpl implements UserService {
                 .fullName(dto.getFirstName() + " " + dto.getLastName())
                 .username(dto.getUsername())
                 .password(passwordEncoder.encode(dto.getPassword()))
+                .phoneNumber(dto.getPhoneNumber())
                 .identityCard(dto.getIdentityCard())
                 .status(Status.ACTIVE)
                 .role(Role.RESIDENT)
                 .citizenId(citizenIdString)
-                .phoneNumber(dto.getPhoneNumber())
                 .build();
 
         return userMapper.toDto(userRepository.saveAndFlush(user));
@@ -64,24 +76,25 @@ public class UserServiceImpl implements UserService {
      * This function validates the user details during creation.
      * 
      * @param UserRequestDto user - The user details to validate.
+     * 
      * @return void - Throws exceptions if validation fails.
      */
-	@Override
-	public void validateUser(UserRequestDto user) {
-		if (user.getFirstName() == null || user.getFirstName().isEmpty()) {
+    @Override
+    public void validateUser(UserRequestDto user) {
+        if (user.getFirstName() == null || user.getFirstName().isEmpty()) {
             throw new UsernameInvalidException("First name cannot be null or empty");
         }
         if (user.getLastName() == null || user.getLastName().isEmpty()) {
             throw new UsernameInvalidException("Last name cannot be null or empty");
         }
         if (user.getPassword() == null || user.getPassword().isEmpty() ||
-            user.getPassword().length() < 8) {
+                user.getPassword().length() < 8) {
             throw new PasswordInvalidException("Password must be at least 8 characters");
         }
-        // TODO: Uncomment this for production - requires uppercase, lowercase, and digit
-        // if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$")) {
-        //     throw new PasswordInvalidException("Password must contain at least one uppercase letter, one lowercase letter, and one digit");
-        // }
+        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\\\d)[A-Za-z\\\\d]{8,}$")) {
+            throw new PasswordInvalidException(
+                    "Password must contain at least one uppercase letter, one lowercase letter, and one digit");
+        }
         if (user.getPhoneNumber() == null || user.getPhoneNumber().isEmpty()) {
             throw new PhoneNumberInvalidException("Phone number cannot be null or empty");
         }
@@ -100,7 +113,7 @@ public class UserServiceImpl implements UserService {
         if (!user.getIdentityCard().matches("^\\d{12}$")) {
             throw new PhoneNumberInvalidException("Identity card must contain only digits");
         }
-        
+
         // Validate of repository
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new UsernameExistsException("Username already exists");
@@ -111,8 +124,15 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByIdentityCard(user.getIdentityCard())) {
             throw new IdentityCardExistsException("Identity card already exists");
         }
-	}
+    }
 
+    /*
+     * This function validates the citizen ID during user creation.
+     * 
+     * @param String citizenId - The citizen ID to validate.
+     * 
+     * @return void - Throws exceptions if validation fails.
+     */
     @Override
     public void validateCitizenId(String citizenId) {
         if (citizenId == null || citizenId.isEmpty()) {
@@ -124,34 +144,47 @@ public class UserServiceImpl implements UserService {
         if (!citizenId.matches("^[0-9]{10}$")) {
             throw new CitizenIdInvalidException("Citizen ID must contain only digits");
         }
-        // Validate of repository
         if (userRepository.existsByCitizenId(citizenId)) {
-            throw new IdentityCardExistsException("Citizen ID already exists");
+            throw new CitizenIdExistsException("Citizen ID already exists");
+        }
+    }
+
+    /*
+    * This function validates the user ID during user operations.
+    *
+    * @param Long id - The user ID to validate.
+    * @return void - Throws exceptions if validation fails.
+    * */
+    @Override
+    public void validateUserId(Long id) {
+        if (id == null || id <= 0) {
+            throw new UserIDNotFoundException("User ID must be a positive number");
+        }
+        if (!userRepository.existsById(id)) {
+            throw new UserIDNotFoundException("User with ID " + id + " does not exist");
         }
     }
 
     @Override
     public User updateUser(Long id, UserUpdateRequest userUpdateRequest) {
+        validateUserId(id);
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'updateUser'");
     }
 
+    /*
+    * */
     @Override
-    public User deletedUser(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deletedUser'");
-    }
-
-    @Override
-    public User restoreUser(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'restoreUser'");
-    }
-
-    @Override
-    public User hasAuthenticated(Long id) {
-        // TODO Auto-generated method stub
-        throw new UserIDNotFoundException("Unimplemented method 'hasAuthenticated'");
+    public void restoreUser(Long id) {
+        User user = userRepository.findById(id).orElseThrow(
+                () -> new UserIDNotFoundException("User with ID " + id + " not found"));
+        if (user.getStatus() == Status.BANNED) {
+            throw new IllegalStateException("User with ID " + id + " is not allowed to restore");
+        } else if (user.getStatus() == Status.ACTIVE) {
+            throw new HadUserActiveException("User with ID " + id + " is active");
+        }
+        user.setStatus(Status.ACTIVE);
+        userRepository.save(user);
     }
 
     @Override
@@ -161,51 +194,69 @@ public class UserServiceImpl implements UserService {
         }
         return userMapper.toDto(
                 userRepository.findById(id).orElseThrow(
-                        () -> new UserIDNotFoundException("User with ID " + id + " not found")
-                )
-        );
+                        () -> new UserIDNotFoundException("User with ID " + id + " not found")));
     }
 
     @Override
-    public User getUserByUsername(String username) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUserByUsername'");
+    public UserResponseDto getUserByUsername(String username) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new UsernameInvalidException("User with username " + username + " not found");
+        }
+        return userMapper.toDto(user);
     }
 
     @Override
-    public User getUserByIdentityCard(String identityCard) {
+    public UserResponseDto getUserByIdentityCard(String identityCard) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getUserByIdentityCard'");
     }
 
     @Override
-    public User getUserByCitizenId(String citizenId) {
+    public UserResponseDto getUserByCitizenId(String citizenId) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getUserByCitizenId'");
     }
 
     @Override
-    public User getUserByPhoneNumber(String phoneNumber) {
+    public UserResponseDto getUserByPhoneNumber(String phoneNumber) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getUserByPhoneNumber'");
     }
 
     @Override
-    public User getUserByFullName(String fullName) {
+    public UserResponseDto getUserByFullName(String fullName) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getUserByFullName'");
     }
 
     @Override
     public void deleteUserById(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteUserById'");
+        validateUserId(id);
+        User user = userRepository.findById(id).orElseThrow(
+                () -> new UserIDNotFoundException("User with ID " + id + " not found"));
+        if (user.getStatus() == Status.DELETED) {
+            throw new HadUserDeteleException("User with ID " + id + " is already deleted");
+        } else if (user.getStatus() == Status.BANNED) {
+            throw new HadUserDeteleException("User with ID " + id + " is banned, cannot delete");
+        }
+        user.setStatus(Status.DELETED);
+        userRepository.save(user);
     }
 
     @Override
     public void deleteUserByUsername(String username) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteUserByUsername'");
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new UsernameInvalidException("User with username " + username + " not found");
+        }
+        if (user.getStatus() == Status.DELETED) {
+            throw new HadUserDeteleException("User with username " + username + " is already deleted");
+        } else if (user.getStatus() == Status.BANNED) {
+            throw new HadUserDeteleException("User with username " + username + " is banned, cannot delete");
+        }
+        user.setStatus(Status.DELETED);
+        userRepository.save(user);
     }
 
     @Override
@@ -224,5 +275,11 @@ public class UserServiceImpl implements UserService {
     public void validateUpdateUser(UserUpdateRequest user) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'validateUpdateUser'");
+    }
+
+    @Override
+    public List<UserResponseDto> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return userMapper.toDtoList(users);
     }
 }

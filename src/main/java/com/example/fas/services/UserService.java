@@ -1,5 +1,7 @@
 package com.example.fas.services;
 
+import java.util.List;
+
 import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.dto.UserDto.UserUpdateRequest;
@@ -12,26 +14,22 @@ public interface UserService {
     // PUT /users/{id}
     User updateUser(Long id, UserUpdateRequest userUpdateRequest);
 
-    // User updateUserByPhoneNumber(String phoneNumber, UserUpdateRequest userUpdateRequest);
-
-    User deletedUser(Long id);
-
-    User restoreUser(Long id);
-
-    User hasAuthenticated(Long id);
+    void restoreUser(Long id);
 
     // GET /users/{id}
     UserResponseDto getUserById(Long id);
-    
-    User getUserByUsername(String username);
 
-    User getUserByIdentityCard(String identityCard);
+    List<UserResponseDto> getAllUsers();
 
-    User getUserByCitizenId(String citizenId);
+    UserResponseDto getUserByUsername(String username);
 
-    User getUserByPhoneNumber(String phoneNumber);
+    UserResponseDto getUserByIdentityCard(String identityCard);
 
-    User getUserByFullName(String fullName);
+    UserResponseDto getUserByCitizenId(String citizenId);
+
+    UserResponseDto getUserByPhoneNumber(String phoneNumber);
+
+    UserResponseDto  getUserByFullName(String fullName);
 
     // DELETE /users/{id}
     void deleteUserById(Long id);
@@ -46,6 +44,8 @@ public interface UserService {
     void validateUser(UserRequestDto user);
 
     void validateCitizenId(String citizenId);
+
+    void validateUserId(Long id);
 
     void validateUpdateUser(UserUpdateRequest user);
 }

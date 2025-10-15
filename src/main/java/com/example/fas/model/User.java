@@ -62,6 +62,9 @@ public class User {
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Room> rooms;
 
+    @OneToMany(mappedBy = "guest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Booking> bookings;
+
     @NotNull(message = "Creation timestamp cannot be null")
     private Instant createdAt;
 

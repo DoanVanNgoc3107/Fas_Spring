@@ -1,5 +1,7 @@
 package com.example.fas.mapper;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 import com.example.fas.dto.UserDto.UserRequestDto;
@@ -70,6 +72,22 @@ public class UserMapper {
                 .phoneNumber(dto.getPhoneNumber())
                 .build();
         return user;
+    }
+
+    /*
+     * Convert a list of {@link User} entities to a list of {@link UserResponseDto}.
+     * 
+     * <p>This method returns {@code null} when the input is {@code null}.</p>
+     * 
+     * @param users the list of {@link User} entities to convert; may be {@code null}
+     * 
+     * @return a list of populated {@link UserResponseDto} or {@code null} if {@code users} is {@code null}
+     */
+    public List<UserResponseDto> toDtoList(List<User> users) {
+        if (users == null) {
+            return null;
+        }
+        return users.stream().map(this::toDto).toList();
     }
 
 }
