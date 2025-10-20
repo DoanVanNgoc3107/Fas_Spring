@@ -2,5 +2,5 @@ package com.example.fas.enums;
 
 public enum Role {
     ADMIN,
-    RESIDENT
+    USER
 }

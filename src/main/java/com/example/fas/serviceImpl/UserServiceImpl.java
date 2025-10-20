@@ -7,16 +7,13 @@ import com.example.fas.enums.Role;
 import com.example.fas.enums.Status;
 import com.example.fas.exceptions.user.error.HadUserActiveException;
 import com.example.fas.exceptions.user.error.HadUserDeteleException;
-import com.example.fas.exceptions.user.exists.CitizenIdExistsException;
 import com.example.fas.exceptions.user.exists.IdentityCardExistsException;
 import com.example.fas.exceptions.user.exists.PhoneNumberExistsException;
 import com.example.fas.exceptions.user.exists.UsernameExistsException;
-import com.example.fas.exceptions.user.invalid.CitizenIdInvalidException;
-import com.example.fas.exceptions.user.invalid.PasswordInvalidException;
-import com.example.fas.exceptions.user.invalid.PhoneNumberInvalidException;
-import com.example.fas.exceptions.user.invalid.UsernameInvalidException;
+import com.example.fas.exceptions.user.invalid.*;
 
 import com.example.fas.exceptions.user.notFound.UserIDNotFoundException;
+import com.example.fas.exceptions.user.notFound.UsernameNotFoundException;
 import com.example.fas.mapper.UserMapper;
 import com.example.fas.model.User;
 import com.example.fas.repositories.UserRepository;
@@ -31,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
-
     @Autowired
     private final UserMapper userMapper;
 
@@ -39,7 +35,7 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
-            BCryptPasswordEncoder passwordEncoder) {
+                           BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -47,40 +43,36 @@ public class UserServiceImpl implements UserService {
 
     /*
      * This function creates a new user in the system.
-     * 
+     *
      * @param UserRequestDto dto - The user details for the new user.
-     * 
+     *
      * @return UserResponseDto - The created user's details.
      */
     @Override
     @Transactional
     public UserResponseDto createUser(UserRequestDto dto) {
         validateUser(dto);
-        String citizenIdString = User.generateRandomAlphanumericIdentityCard();
-        validateCitizenId(citizenIdString);
-        User user = User.builder()
-                .fullName(dto.getFirstName() + " " + dto.getLastName())
-                .username(dto.getUsername())
-                .password(passwordEncoder.encode(dto.getPassword()))
-                .phoneNumber(dto.getPhoneNumber())
-                .identityCard(dto.getIdentityCard())
-                .status(Status.ACTIVE)
-                .role(Role.RESIDENT)
-                .citizenId(citizenIdString)
-                .build();
+
+        User user = userMapper.toEntity(dto);
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setStatus(Status.ACTIVE);
+        user.setRole(Role.USER);
 
         return userMapper.toDto(userRepository.saveAndFlush(user));
     }
 
     /*
      * This function validates the user details during creation.
-     * 
+     *
      * @param UserRequestDto user - The user details to validate.
-     * 
+     *
      * @return void - Throws exceptions if validation fails.
      */
     @Override
     public void validateUser(UserRequestDto user) {
+        if (user == null) {
+            throw new UserNotNullException("User cannot be null");
+        }
         if (user.getFirstName() == null || user.getFirstName().isEmpty()) {
             throw new UsernameInvalidException("First name cannot be null or empty");
         }
@@ -91,7 +83,7 @@ public class UserServiceImpl implements UserService {
                 user.getPassword().length() < 8) {
             throw new PasswordInvalidException("Password must be at least 8 characters");
         }
-        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\\\d)[A-Za-z\\\\d]{8,}$")) {
+        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$")) {
             throw new PasswordInvalidException(
                     "Password must contain at least one uppercase letter, one lowercase letter, and one digit");
         }
@@ -127,34 +119,11 @@ public class UserServiceImpl implements UserService {
     }
 
     /*
-     * This function validates the citizen ID during user creation.
-     * 
-     * @param String citizenId - The citizen ID to validate.
-     * 
+     * This function validates the user ID during user operations.
+     *
+     * @param Long id - The user ID to validate.
      * @return void - Throws exceptions if validation fails.
-     */
-    @Override
-    public void validateCitizenId(String citizenId) {
-        if (citizenId == null || citizenId.isEmpty()) {
-            throw new CitizenIdInvalidException("Citizen ID cannot be null or empty");
-        }
-        if (citizenId.length() != 10) {
-            throw new CitizenIdInvalidException("Citizen ID must be exactly 10 digits long");
-        }
-        if (!citizenId.matches("^[0-9]{10}$")) {
-            throw new CitizenIdInvalidException("Citizen ID must contain only digits");
-        }
-        if (userRepository.existsByCitizenId(citizenId)) {
-            throw new CitizenIdExistsException("Citizen ID already exists");
-        }
-    }
-
-    /*
-    * This function validates the user ID during user operations.
-    *
-    * @param Long id - The user ID to validate.
-    * @return void - Throws exceptions if validation fails.
-    * */
+     * */
     @Override
     public void validateUserId(Long id) {
         if (id == null || id <= 0) {
@@ -165,7 +134,20 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /*
+     * This function updates the user details.
+     *
+     * @param Long id - The ID of the user to update.
+     *
+     * @param UserUpdateRequest - The new user details.
+     *
+     * @return User - The updated user details.
+     *
+     * Note: This method is currently unimplemented and throws an
+     * UnsupportedOperationException.
+     */
     @Override
+    @Transactional
     public User updateUser(Long id, UserUpdateRequest userUpdateRequest) {
         validateUserId(id);
         // TODO Auto-generated method stub
@@ -173,8 +155,14 @@ public class UserServiceImpl implements UserService {
     }
 
     /*
-    * */
+     * This function restores a user by changing their status to ACTIVE.
+     *
+     * @param Long id - The ID of the user to restore.
+     *
+     * @return void - Throws exceptions if the user cannot be restored.
+     * */
     @Override
+    @Transactional
     public void restoreUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(
                 () -> new UserIDNotFoundException("User with ID " + id + " not found"));
@@ -187,6 +175,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    // THIS FUNCTION GET USER BY ID
     @Override
     public UserResponseDto getUserById(Long id) {
         if (id == null || id <= 0) {
@@ -214,23 +203,49 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto getUserByCitizenId(String citizenId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUserByCitizenId'");
+        if (citizenId == null || citizenId.isEmpty()) {
+            throw new IdentityCardInvalidException("Citizen ID cannot be null or empty");
+        } else if (!citizenId.matches("^\\d{12}$")) {
+            throw new IdentityCardExistsException("Citizen ID must contain exactly 12 digits");
+        }
+        UserResponseDto userResponseDto = userMapper.toDto(
+                userRepository.findByIdentityCard(citizenId));
+        if (userResponseDto == null) {
+            throw new IdentityCardExistsException("User with citizen ID " + citizenId + " not found");
+        }
+        return userResponseDto;
     }
 
     @Override
     public UserResponseDto getUserByPhoneNumber(String phoneNumber) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUserByPhoneNumber'");
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            throw new PhoneNumberInvalidException("Phone number cannot be null or empty");
+        }
+        UserResponseDto userResponseDto = userMapper.toDto(
+                userRepository.findByPhoneNumber(phoneNumber));
+        if (userResponseDto == null) {
+            throw new PhoneNumberInvalidException("User with phone number " + phoneNumber + " not found");
+        }
+        return userResponseDto;
     }
 
     @Override
     public UserResponseDto getUserByFullName(String fullName) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUserByFullName'");
+        if (fullName == null || fullName.isEmpty()) {
+            throw new UsernameInvalidException("Full name cannot be null or empty");
+        }
+        if (!fullName.matches("^[a-zA-ZÀ-ỹ\\s]+$")) {
+            throw new UsernameInvalidException("Full name contains invalid characters");
+        }
+        UserResponseDto userResponseDto = userMapper.toDto(userRepository.findByUsername(fullName));
+        if (userResponseDto == null) {
+            throw new UsernameNotFoundException("User with full name " + fullName + " not found");
+        }
+        return userResponseDto;
     }
 
     @Override
+    @Transactional
     public void deleteUserById(Long id) {
         validateUserId(id);
         User user = userRepository.findById(id).orElseThrow(
@@ -245,6 +260,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUserByUsername(String username) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
@@ -259,13 +275,30 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    /*
+    * This function deletes a user by their identity card number.
+    *
+    * @param String identityCard - The identity card number of the user to delete.
+    * @return void - Throws exceptions if the user cannot be deleted.
+    * */
     @Override
+    @Transactional
     public void deleteUserByIdentityCard(String identityCard) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteUserByIdentityCard'");
+        validateUserByIdentityCard(identityCard);
+        UserResponseDto userResponseDto = getUserByIdentityCard(identityCard);
+        User user = userRepository.findById(userResponseDto.getId()).orElseThrow(
+                () -> new UserIDNotFoundException("User with ID " + userResponseDto.getId() + " not found"));
+        if (user.getStatus() == Status.DELETED) {
+            throw new HadUserDeteleException("User with identity card " + identityCard + " is already deleted");
+        } else if (user.getStatus() == Status.BANNED) {
+            throw new HadUserDeteleException("User with identity card " + identityCard + " is banned, cannot delete");
+        }
+        user.setStatus(Status.DELETED);
+        userRepository.save(user);
     }
 
     @Override
+    @Transactional
     public void deleteUserByCitizenId(String citizenId) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'deleteUserByCitizenId'");
@@ -281,5 +314,22 @@ public class UserServiceImpl implements UserService {
     public List<UserResponseDto> getAllUsers() {
         List<User> users = userRepository.findAll();
         return userMapper.toDtoList(users);
+    }
+
+    @Override
+    public void validateUserByIdentityCard(String identityCard) {
+        if (identityCard == null || identityCard.isEmpty()) {
+            throw new IdentityCardInvalidException("Identity card cannot be null or empty");
+        }
+        if (identityCard.length() != 12) {
+            throw new IdentityCardInvalidException("Identity card must be exactly 12 digits long");
+        }
+        if (!identityCard.matches("^\\d{12}$")) {
+            throw new IdentityCardInvalidException("Identity card must contain only digits");
+        }
+        if (!userRepository.existsByIdentityCard(identityCard)) {
+            throw new IdentityCardInvalidException(
+                    "User with identity card " + identityCard + " does not exist");
+        }
     }
 }

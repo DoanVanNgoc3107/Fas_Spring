@@ -13,7 +13,6 @@ public class UserResponseDto {
     private String status;
     private String role;
     private String identityCard;
-    private String citizenId;
     private String createdAt;
     private String updatedAt;
 }

@@ -13,7 +13,7 @@ import com.example.fas.model.User;
  *
  * <p>This class contains simple, stateless mapping methods. Keep mappings
  * lightweight and free of business logic — validation and complex transforms
- * should be performed in service layer.</p>
+ * should be performed in the service layer.</p>
  *
  * <p>Usage examples:
  * <ul>
@@ -46,7 +46,6 @@ public class UserMapper {
                 .role(user.getRole() != null ? user.getRole().name() : null)
                 .identityCard(user.getIdentityCard())
                 .phoneNumber(user.getPhoneNumber())
-                .citizenId(user.getCitizenId())
                 .build();
     }
 
@@ -55,7 +54,7 @@ public class UserMapper {
      *
      * <p>Note: this mapping creates a new {@link User} instance and fills
      * only basic fields provided by the request DTO. Business defaults
-     * (e.g. role, status) or additional processing should be set in service
+     * (e.g., role, status) or additional processing should be set in the service
      * layer after mapping.</p>
      *
      * @param dto the request DTO; may be {@code null}
@@ -65,24 +64,16 @@ public class UserMapper {
         if (dto == null) {
             return null;
         }
-        User user = User.builder()
-                .fullName( dto.getFirstName() + " " + dto.getLastName())
+        return User.builder()
+                .fullName(dto.getFirstName() + " " + dto.getLastName())
                 .username(dto.getUsername())
                 .identityCard(dto.getIdentityCard())
                 .phoneNumber(dto.getPhoneNumber())
                 .build();
-        return user;
     }
 
     /*
-     * Convert a list of {@link User} entities to a list of {@link UserResponseDto}.
-     * 
-     * <p>This method returns {@code null} when the input is {@code null}.</p>
-     * 
-     * @param users the list of {@link User} entities to convert; may be {@code null}
-     * 
-     * @return a list of populated {@link UserResponseDto} or {@code null} if {@code users} is {@code null}
-     */
+    * */
     public List<UserResponseDto> toDtoList(List<User> users) {
         if (users == null) {
             return null;

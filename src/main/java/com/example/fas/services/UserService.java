@@ -43,9 +43,9 @@ public interface UserService {
     // Validate user details
     void validateUser(UserRequestDto user);
 
-    void validateCitizenId(String citizenId);
-
     void validateUserId(Long id);
+
+    void validateUserByIdentityCard(String identityCard);
 
     void validateUpdateUser(UserUpdateRequest user);
 }

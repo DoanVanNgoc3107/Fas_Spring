@@ -48,14 +48,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @Column(unique = true, length = 10)
-    @NotBlank(message = "Identity card can not be blank")
+    @Column(unique = true, length = 12)
+    @NotBlank(message = "CCCD cannot be blank")
+    @Pattern(regexp = "^\\d{12}$", message = "CCCD must be exactly 12 digits")
     private String identityCard;
 
-    @Column(unique = true, length = 10)
-    @Pattern(regexp = "^\\d{10}$", message = "Citizen ID must be exactly 10 digits")
-    private String citizenId;
-
+    @NotNull(message = "Phone number cannot be null")
     @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")
     private String phoneNumber;
 
@@ -64,6 +62,9 @@ public class User {
 
     @OneToMany(mappedBy = "guest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Booking> bookings;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<PaymentHistory> paymentHistories;
 
     @NotNull(message = "Creation timestamp cannot be null")
     private Instant createdAt;
@@ -80,15 +81,5 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = Instant.now();
-    }
-
-    public static String generateRandomAlphanumericIdentityCard() {
-        StringBuilder sb = new StringBuilder();
-        String chars = "0123456789";
-        for (int i = 0; i < 10; i++) {
-            int randomIndex = (int) (Math.random() * chars.length());
-            sb.append(chars.charAt(randomIndex));
-        }
-        return sb.toString();
     }
 }

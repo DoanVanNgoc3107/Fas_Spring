@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 import jakarta.persistence.Entity;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import jakarta.persistence.Table;
@@ -16,10 +17,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.GenerationType;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "bookings")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Booking {
     @Id
@@ -34,6 +38,7 @@ public class Booking {
     @JoinColumn(name = "guest_id", nullable = false)
     private User guest;
 
+    @DecimalMin(value = "0.0", inclusive = false, message = "Total amount must be positive")
     private BigDecimal totalAmount;
 
     @NotNull(message = "Room price per day cannot be null")
