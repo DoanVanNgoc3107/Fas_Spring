@@ -244,6 +244,13 @@ public class UserServiceImpl implements UserService {
         return userResponseDto;
     }
 
+    /*
+    * This function deletes a user by their ID by setting their status to DELETED.
+    *
+
+    * @param Long id - The ID of the user to delete.
+    * @return void - Throws exceptions if the user cannot be deleted.
+    * */
     @Override
     @Transactional
     public void deleteUserById(Long id) {
