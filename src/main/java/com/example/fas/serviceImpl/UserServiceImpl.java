@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
-                           BCryptPasswordEncoder passwordEncoder) {
+            BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -120,8 +120,9 @@ public class UserServiceImpl implements UserService {
      * This function validates the user ID during user operations.
      *
      * @param Long id - The user ID to validate.
+     * 
      * @return void - Throws exceptions if validation fails.
-     * */
+     */
     @Override
     public void validateUserId(Long id) {
         if (id == null || id <= 0) {
@@ -158,7 +159,7 @@ public class UserServiceImpl implements UserService {
      * @param Long id - The ID of the user to restore.
      *
      * @return void - Throws exceptions if the user cannot be restored.
-     * */
+     */
     @Override
     @Transactional
     public void restoreUser(Long id) {
@@ -177,7 +178,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDto getUserById(Long id) {
         if (id == null || id <= 0) {
-            throw new UserIDNotFoundException("User ID must be a positive number");
+            throw new UserIDInvalidException("User ID must be a positive number");
         }
         return userMapper.toDto(
                 userRepository.findById(id).orElseThrow(
@@ -245,10 +246,11 @@ public class UserServiceImpl implements UserService {
     /*
      * This function deletes a user by their ID by setting their status to DELETED.
      *
-
+     * 
      * @param Long id - The ID of the user to delete.
+     * 
      * @return void - Throws exceptions if the user cannot be deleted.
-     * */
+     */
     @Override
     @Transactional
     public void deleteUserById(Long id) {
@@ -284,8 +286,9 @@ public class UserServiceImpl implements UserService {
      * This function deletes a user by their identity card number.
      *
      * @param String identityCard - The identity card number of the user to delete.
+     * 
      * @return void - Throws exceptions if the user cannot be deleted.
-     * */
+     */
     @Override
     @Transactional
     public void deleteUserByIdentityCard(String identityCard) {
