@@ -46,6 +46,7 @@ public class User {
     private Status status;
 
     @Enumerated(EnumType.STRING)
+    @NotNull(message = "Role cannot be null")
     private Role role;
 
     @Column(unique = true, length = 12)
