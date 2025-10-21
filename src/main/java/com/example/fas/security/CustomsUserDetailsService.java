@@ -14,7 +14,7 @@ import java.util.List;
 
 @Service
 public class CustomsUserDetailsService implements UserDetailsService {
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public CustomsUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;

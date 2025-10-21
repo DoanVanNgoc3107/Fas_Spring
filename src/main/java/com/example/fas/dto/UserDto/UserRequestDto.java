@@ -12,12 +12,12 @@ import lombok.Builder;
 @Builder
 public class UserRequestDto {
     @NotBlank(message = "First name is required")
-    @Pattern(regexp = "^[a-zA-Z]+$", message = "First name must contain only letters")
+    @Pattern(regexp = "^[a-zA-ZÀ-ỹ\\s]+$", message = "First name must contain only letters and spaces")
     @Size(min = 2, message = "First name must be at least 2 characters long")
     private String firstName;
 
     @NotBlank(message = "Last name is required")
-    @Pattern(regexp = "^[a-zA-Z]+$", message = "Last name must contain only letters")
+    @Pattern(regexp = "^[a-zA-ZÀ-ỹ\\s]+$", message = "Last name must contain only letters and spaces")
     @Size(min = 2, message = "Last name must be at least 2 characters long")
     private String lastName;
 
@@ -27,8 +27,8 @@ public class UserRequestDto {
 
     @NotBlank(message = "Password can not be blank")
     @Size(min = 8, message = "Password must be at least 8 characters")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$"
-            , message = "Password must contain at least one uppercase letter, one lowercase letter, and one digit")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\\\d)(?=.*[@$!%*?&.])[A-Za-z\\\\d@$!%*?&.]{8,}$"
+            , message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character")
     private String password;
 
     @NotBlank(message = "CCCD cannot be blank")

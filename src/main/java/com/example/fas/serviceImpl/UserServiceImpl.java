@@ -21,16 +21,14 @@ import com.example.fas.services.UserService;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
-    @Autowired
-    private final UserMapper userMapper;
 
+    private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -83,9 +81,9 @@ public class UserServiceImpl implements UserService {
                 user.getPassword().length() < 8) {
             throw new PasswordInvalidException("Password must be at least 8 characters");
         }
-        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$")) {
+        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
             throw new PasswordInvalidException(
-                    "Password must contain at least one uppercase letter, one lowercase letter, and one digit");
+                    "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
         }
         if (user.getPhoneNumber() == null || user.getPhoneNumber().isEmpty()) {
             throw new PhoneNumberInvalidException("Phone number cannot be null or empty");
@@ -245,12 +243,12 @@ public class UserServiceImpl implements UserService {
     }
 
     /*
-    * This function deletes a user by their ID by setting their status to DELETED.
-    *
+     * This function deletes a user by their ID by setting their status to DELETED.
+     *
 
-    * @param Long id - The ID of the user to delete.
-    * @return void - Throws exceptions if the user cannot be deleted.
-    * */
+     * @param Long id - The ID of the user to delete.
+     * @return void - Throws exceptions if the user cannot be deleted.
+     * */
     @Override
     @Transactional
     public void deleteUserById(Long id) {
@@ -283,11 +281,11 @@ public class UserServiceImpl implements UserService {
     }
 
     /*
-    * This function deletes a user by their identity card number.
-    *
-    * @param String identityCard - The identity card number of the user to delete.
-    * @return void - Throws exceptions if the user cannot be deleted.
-    * */
+     * This function deletes a user by their identity card number.
+     *
+     * @param String identityCard - The identity card number of the user to delete.
+     * @return void - Throws exceptions if the user cannot be deleted.
+     * */
     @Override
     @Transactional
     public void deleteUserByIdentityCard(String identityCard) {
