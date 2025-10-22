@@ -1,5 +1,6 @@
 package com.example.fas.exceptions;
 
+import com.example.fas.exceptions.auth.LoginFailedException;
 import com.example.fas.exceptions.user.exists.IdentityCardExistsException;
 import com.example.fas.exceptions.user.exists.PhoneNumberExistsException;
 import com.example.fas.exceptions.user.exists.UsernameExistsException;
@@ -14,9 +15,12 @@ import com.example.fas.exceptions.user.notFound.PhoneNumberNotFoundException;
 import com.example.fas.exceptions.user.notFound.UserIDNotFoundException;
 import com.example.fas.exceptions.user.notFound.UsernameNotFoundException;
 
+import org.apache.catalina.WebResource;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties.Http;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -200,5 +204,22 @@ public class GlobalExceptionHandler {
         details.put("suggest", "...");
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /*
+     * Exception handler for Authentication
+     */
+
+    @ExceptionHandler({
+            AuthenticationException.class,
+    })
+    public ResponseEntity<ErrorResponse> handlerAuthenticationException(
+            AuthenticationException au, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                au.getClass().getSimpleName(),
+                au.getMessage(),
+                request.getDescription(false));
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 }

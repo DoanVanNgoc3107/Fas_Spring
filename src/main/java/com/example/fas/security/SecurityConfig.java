@@ -44,7 +44,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF để dễ dàng kiểm thử API
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/api/auth/**", "/api/users/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults()); // Sử dụng HTTP Basic Authentication
