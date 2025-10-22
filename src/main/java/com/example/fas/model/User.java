@@ -1,17 +1,16 @@
 package com.example.fas.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import com.example.fas.enums.Status;
 import com.example.fas.enums.Role;
+
 import java.time.Instant;
 import java.util.Set;
 
@@ -37,8 +36,8 @@ public class User {
 
     @NotBlank(message = "Password can not be blank")
     @Size(min = 8, message = "Password must be at least 8 characters")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$"
-            , message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character")
+//    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$"
+//            , message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character")
     private String password;
 
     @NotNull(message = "Status cannot be null")
@@ -68,9 +67,11 @@ public class User {
     private Set<PaymentHistory> paymentHistories;
 
     @NotNull(message = "Creation timestamp cannot be null")
+    @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private Instant createdAt;
 
     @NotNull(message = "Update timestamp cannot be null")
+    @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private Instant updatedAt;
 
     @PrePersist

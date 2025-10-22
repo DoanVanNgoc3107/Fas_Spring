@@ -1,10 +1,9 @@
 package com.example.fas.controllers;
 
-import javax.naming.AuthenticationException;
-
+import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.authDto.LoginResponseDto;
-import com.example.fas.exceptions.auth.LoginFailedException;
 import com.example.fas.security.JwtService;
+import com.example.fas.serviceImpl.UserServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,11 +25,23 @@ public class AuthController {
 
     private final DaoAuthenticationProvider daoAuthenticationProvider;
 
+    private final UserServiceImpl userService;
+
     private final JwtService jwtService;
 
-    public AuthController(DaoAuthenticationProvider daoAuthenticationProvider, JwtService jwtService) {
+    public AuthController(DaoAuthenticationProvider daoAuthenticationProvider, JwtService jwtService,
+                          UserServiceImpl userService) {
         this.daoAuthenticationProvider = daoAuthenticationProvider;
+        this.userService = userService;
         this.jwtService = jwtService;
+    }
+
+
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<UserRequestDto>> registerPage(@Valid @RequestBody UserRequestDto userDto) {
+        userService.createUser(userDto);
+        var apiResponse = ApiResponse.success("Registration successful.", userDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }
 
     @PostMapping("/login")

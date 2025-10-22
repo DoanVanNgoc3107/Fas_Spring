@@ -46,6 +46,8 @@ public class UserMapper {
                 .role(user.getRole() != null ? user.getRole().name() : null)
                 .identityCard(user.getIdentityCard())
                 .phoneNumber(user.getPhoneNumber())
+                .createdAt(String.valueOf(user.getCreatedAt()))
+                .updatedAt(String.valueOf(user.getUpdatedAt()))
                 .build();
     }
 

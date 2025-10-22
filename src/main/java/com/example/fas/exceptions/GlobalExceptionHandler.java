@@ -1,3 +1,4 @@
+// GlobalExceptionHandler.java (fixed)
 package com.example.fas.exceptions;
 
 import com.example.fas.exceptions.auth.LoginFailedException;
@@ -15,11 +16,11 @@ import com.example.fas.exceptions.user.notFound.PhoneNumberNotFoundException;
 import com.example.fas.exceptions.user.notFound.UserIDNotFoundException;
 import com.example.fas.exceptions.user.notFound.UsernameNotFoundException;
 
-import org.apache.catalina.WebResource;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties.Http;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+// sửa import đúng:
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -35,35 +36,28 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    // private static final Logger logger =
-    // LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
-    // handle all uncaught exceptions
     @Getter
     @Setter
     public static class ErrorResponse {
-        private int status; // HTTP status code (400, 404, 500...)
-        private String timestamp; // Thời gian xảy ra lỗi
-        private String error; // Loại lỗi (VALIDATION_ERROR, NOT_FOUND...)
-        private String message; // Thông báo lỗi cho user
-        private String path; // Endpoint nào bị lỗi
-        private Map<String, Object> details; // Chi tiết bổ sung (optional)
+        private int status;
+        private String timestamp;
+        private String error;
+        private String message;
+        private String path;
+        private Map<String, Object> details;
 
-        // Constructor mặc định - tự động set timestamp
         public ErrorResponse() {
             this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
 
-        // Constructor đầy đủ
         public ErrorResponse(int status, String error, String message, String path) {
-            this(); // Gọi constructor mặc định để set timestamp
+            this();
             this.status = status;
             this.error = error;
             this.message = message;
             this.path = extractPath(path);
         }
 
-        // Helper method: Lấy path từ WebRequest description
         private String extractPath(String requestDescription) {
             if (requestDescription != null && requestDescription.startsWith("uri=")) {
                 return requestDescription.substring(4);
@@ -72,17 +66,9 @@ public class GlobalExceptionHandler {
         }
     }
 
-    /*
-     * Exception handler for ...
-     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
-            HttpMessageNotReadableException ex, WebRequest request) {
-
-        // Tạo message dễ hiểu cho client
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, WebRequest request) {
         String userMessage = "Invalid JSON format.";
-
-        // Phân tích loại lỗi để đưa ra gợi ý cụ thể
         String originalMessage = ex.getMessage();
         if (originalMessage != null) {
             if (originalMessage.contains("Required request body is missing")) {
@@ -93,96 +79,49 @@ public class GlobalExceptionHandler {
                 userMessage = "Cannot deserialize JSON. Check field types.";
             }
         }
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getClass().getSimpleName(),
-                userMessage,
-                request.getDescription(false));
-
-        // Thêm thông tin debug
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getClass().getSimpleName(), userMessage, request.getDescription(false));
         Map<String, Object> debugInfo = new HashMap<>();
         debugInfo.put("original_error", originalMessage);
         debugInfo.put("suggestion", "Check JSON syntax and field types");
         debugInfo.put("common_causes", "Missing commas, unclosed brackets, incorrect field types");
         errorResponse.setDetails(debugInfo);
-
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    /*
-     * Exception handler cho tất cả các lỗi không được xử lý
-     */
-    public ResponseEntity<ErrorResponse> handleAllExceptions(
-            Exception ex, WebRequest request) {
-
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                ex.getClass().getSimpleName(),
-                "An unexpected error occurred. Please try again later.",
-                request.getDescription(false));
-
-        // Thêm thông tin debug
+    public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getClass().getSimpleName(), "An unexpected error occurred. Please try again later.", request.getDescription(false));
         Map<String, Object> debugInfo = new HashMap<>();
         debugInfo.put("original_error", ex.getMessage());
         debugInfo.put("suggestion", "Contact support if the issue persists");
         errorResponse.setDetails(debugInfo);
-
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    /*
-     * Exception handler for field exists
-     */
     @ExceptionHandler({
             UsernameExistsException.class,
             PhoneNumberExistsException.class,
             IdentityCardExistsException.class
     })
-    public ResponseEntity<ErrorResponse> handlerFieldExistsException(
-            RuntimeException ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                ex.getClass().getSimpleName(),
-                ex.getMessage(),
-                request.getDescription(false));
+    public ResponseEntity<ErrorResponse> handlerFieldExistsException(RuntimeException ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getClass().getSimpleName(), ex.getMessage(), request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
-    /*
-     * Exception handler for resource not found
-     */
     @ExceptionHandler({
             UserIDNotFoundException.class,
             UsernameNotFoundException.class,
             PhoneNumberNotFoundException.class,
             IdentityCardNotFoundException.class
     })
-    public ResponseEntity<ErrorResponse> handlerResourceNotFoundException(
-            RuntimeException ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                ex.getClass().getSimpleName(),
-                ex.getMessage(),
-                request.getDescription(false));
-
+    public ResponseEntity<ErrorResponse> handlerResourceNotFoundException(RuntimeException ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getClass().getSimpleName(), ex.getMessage(), request.getDescription(false));
         Map<String, Object> debugInfo = new HashMap<>();
         debugInfo.put("original_error", ex.getMessage());
         debugInfo.put("suggestion", "Verify the resource identifier and try again");
         errorResponse.setDetails(debugInfo);
-
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    /*
-     * Exception handler for field invalid exceptions
-     * 
-     * @Exception : Username, PhoneNumber, Password, UserID, USer, IdentityCard
-     * 
-     * @param : RuntimeExcetption, WebRequest
-     * 
-     * @return : ResponseEntity
-     */
     @ExceptionHandler({
             UsernameInvalidException.class,
             PhoneNumberInvalidException.class,
@@ -191,35 +130,38 @@ public class GlobalExceptionHandler {
             UserNotNullException.class,
             IdentityCardInvalidException.class
     })
-    public ResponseEntity<ErrorResponse> handlerFieldInvalidException(
-            RuntimeException ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getClass().getSimpleName(),
-                ex.getMessage(),
-                request.getDescription(false));
-
+    public ResponseEntity<ErrorResponse> handlerFieldInvalidException(RuntimeException ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getClass().getSimpleName(), ex.getMessage(), request.getDescription(false));
         Map<String, Object> details = new HashMap<>();
-        details.put("orginal_error", ex.getMessage());
-        details.put("suggest", "...");
-
+        details.put("original_error", ex.getMessage());
+        details.put("suggest", "Validation failed");
+        errorResponse.setDetails(details);
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    /*
-     * Exception handler for Authentication
-     */
-
-    @ExceptionHandler({
-            AuthenticationException.class,
-    })
-    public ResponseEntity<ErrorResponse> handlerAuthenticationException(
-            AuthenticationException au, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                au.getClass().getSimpleName(),
-                au.getMessage(),
-                request.getDescription(false));
+    @ExceptionHandler({AuthenticationException.class})
+    public ResponseEntity<ErrorResponse> handlerAuthenticationException(AuthenticationException au, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), au.getClass().getSimpleName(), au.getMessage(), request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler({AccessDeniedException.class})
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ade, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.FORBIDDEN.value(), ade.getClass().getSimpleName(), "Access is denied. You do not have required permissions.", request.getDescription(false));
+        Map<String, Object> debug = new HashMap<>();
+        debug.put("original_error", ade.getMessage());
+        debug.put("suggestion", "Check user roles/authorities for this endpoint");
+        errorResponse.setDetails(debug);
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    // Map DB constraint violations -> 409 (optional but recommended)
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getClass().getSimpleName(), "Database constraint violation", request.getDescription(false));
+        Map<String, Object> debug = new HashMap<>();
+        debug.put("original_error", ex.getMessage());
+        errorResponse.setDetails(debug);
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 }

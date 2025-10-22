@@ -1,33 +1,42 @@
 package com.example.fas.security;
 
+import com.example.fas.utils.CustomAuthenticationEntryPoint;
+import com.example.fas.utils.CustomeAccessDeniedHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy; // Thêm import này
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Thêm import này
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final CustomsUserDetailsService customsUserDetailsService;
-
     private final PasswordEncoder passwordEncoder;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter; // Đã inject
 
-    public SecurityConfig(CustomsUserDetailsService customsUserDetailsService, PasswordEncoder passwordEncoder) {
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomeAccessDeniedHandler customAccessDeniedHandler;
+
+    // Constructor đã đúng
+    public SecurityConfig(CustomsUserDetailsService customsUserDetailsService, PasswordEncoder passwordEncoder,
+                          JwtAuthenticationFilter jwtAuthenticationFilter, CustomeAccessDeniedHandler customAccessDeniedHandler,
+                          CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
+        this.customAccessDeniedHandler = customAccessDeniedHandler;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.customsUserDetailsService = customsUserDetailsService;
         this.passwordEncoder = passwordEncoder;
     }
 
-    /* Đây là phương thức cấu hình DaoAuthenticationProvider để xác thực người dùng sử dụng
-     * CustomsUserDetailsService và PasswordEncoder đã được định nghĩa trước đó.
-     * DaoAuthenticationProvider sẽ sử dụng CustomsUserDetailsService để tải thông tin người dùng từ
-     * cơ sở dữ liệu và PasswordEncoder để so sánh mật khẩu đã mã hóa.
-     * */
+    // Bean daoAuthenticationProvider đã đúng
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -36,18 +45,37 @@ public class SecurityConfig {
         return provider;
     }
 
-    /*
-     * This is the security filter chain configuration method that defines the security rules for incoming requests.
-     * */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF để dễ dàng kiểm thử API
-                .authorizeHttpRequests((requests) -> requests
+
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource))
+                .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF
+
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler))
+
+                // Bắt đầu định nghĩa quy tắc truy cập
+                .authorizeHttpRequests(auth -> auth
+                        // QUY TẮC 1: Cho phép tất cả gọi API login và đăng ký
                         .requestMatchers("/api/auth/**").permitAll()
+                        // QUY TẮC 2: Mọi request CÒN LẠI phải được xác thực
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults()); // Sử dụng HTTP Basic Authentication
+
+                // CHUYỂN SANG STATELESS (Không tạo session)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // THÊM "Người Soát Vé" JWT vào đúng vị trí
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // BỎ HTTP BASIC (vì dùng JWT)
+        // .httpBasic(Customizer.withDefaults());
+
         return http.build();
     }
 }
