@@ -2,6 +2,8 @@ package com.example.fas.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -10,7 +12,9 @@ import lombok.*;
 
 import com.example.fas.enums.Status;
 import com.example.fas.enums.Role;
+import com.example.fas.enums.Social;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Set;
 
@@ -34,26 +38,39 @@ public class User {
     @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
     private String username;
 
-    @NotBlank(message = "Password can not be blank")
     @Size(min = 8, message = "Password must be at least 8 characters")
-//    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$"
-//            , message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character")
     private String password;
 
     @NotNull(message = "Status cannot be null")
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Email(message = "Email should be valid")
+    @Column(unique = true) // Khong cho phep trung email
+    private String email;
+
     @Enumerated(EnumType.STRING)
     @NotNull(message = "Role cannot be null")
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @NotNull(message = "Social provider cannot be null")
+    private Social provider = Social.NONE;
+
+    private String providerId;
+
+    private String avatarUrl;
+
+    @Builder.Default
+    @NotNull(message = "Balance cannot be null")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Balance must be non-negative")
+    private BigDecimal balance = BigDecimal.ZERO;
+
     @Column(unique = true, length = 12)
-    @NotBlank(message = "CCCD cannot be blank")
     @Pattern(regexp = "^\\d{12}$", message = "CCCD must be exactly 12 digits")
     private String identityCard;
 
-    @NotNull(message = "Phone number cannot be null")
     @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")
     private String phoneNumber;
 

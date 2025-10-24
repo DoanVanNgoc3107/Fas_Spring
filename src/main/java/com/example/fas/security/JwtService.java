@@ -1,6 +1,5 @@
 package com.example.fas.security;
 
-import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,19 +36,24 @@ public class JwtService {
     }
 
     public String generateToken(String username) {
+        // ✅ Lấy thời gian "hiện tại" ngay lúc hàm được gọi
+        final long nowMillis = System.currentTimeMillis();
+        final Date issuedAt = new Date(nowMillis);
+        final Date expiration = new Date(nowMillis + jwtExpiration);
+
         return Jwts.builder()
                 .setSubject(username)
-                .setIssuedAt(currentDate)
-                .setExpiration(new Date(currentDate.getTime() + jwtExpiration))
+                .setIssuedAt(issuedAt) // ✅ Dùng thời điểm hiện tại
+                .setExpiration(expiration) // ✅ Dùng thời gian hết hạn tính từ "hiện tại"
                 .signWith(this.signingKey)
                 .compact();
     }
 
     /*
-     build(): Tạo ra "máy đọc vé"
-     parseClaimsJws(token): Đọc vé và kiểm tra chữ ký
-     getBody(): Lấy phần Payload (thông tin bên trong)
-     getSubject(): Lấy thông tin "Chủ sở hữu" (username)
+     * build(): Tạo ra "máy đọc vé"
+     * parseClaimsJws(token): Đọc vé và kiểm tra chữ ký
+     * getBody(): Lấy phần Payload (thông tin bên trong)
+     * getSubject(): Lấy thông tin "Chủ sở hữu" (username)
      */
     public String extractUsername(String token) {
         return Jwts.parser()
@@ -78,6 +82,5 @@ public class JwtService {
         boolean isTokenExpired = isTokenExpired(token);
         return (isUsernameMatch && !isTokenExpired);
     }
-
 
 }

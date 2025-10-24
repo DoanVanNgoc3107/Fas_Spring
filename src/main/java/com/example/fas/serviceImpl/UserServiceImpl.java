@@ -6,12 +6,16 @@ import com.example.fas.dto.UserDto.UserUpdateRequest;
 import com.example.fas.enums.Role;
 import com.example.fas.enums.Status;
 import com.example.fas.exceptions.user.error.HadUserActiveException;
+import com.example.fas.exceptions.user.error.HadUserBannedException;
 import com.example.fas.exceptions.user.error.HadUserDeteleException;
+import com.example.fas.exceptions.user.exists.EmailExistsException;
 import com.example.fas.exceptions.user.exists.IdentityCardExistsException;
 import com.example.fas.exceptions.user.exists.PhoneNumberExistsException;
 import com.example.fas.exceptions.user.exists.UsernameExistsException;
 import com.example.fas.exceptions.user.invalid.*;
-
+import com.example.fas.exceptions.user.notFound.AvatarUrlNotFoundException;
+import com.example.fas.exceptions.user.notFound.EmailNotFoundException;
+import com.example.fas.exceptions.user.notFound.ProviderIdNotFoundException;
 import com.example.fas.exceptions.user.notFound.UserIDNotFoundException;
 import com.example.fas.exceptions.user.notFound.UsernameNotFoundException;
 import com.example.fas.mapper.UserMapper;
@@ -19,7 +23,9 @@ import com.example.fas.model.User;
 import com.example.fas.repositories.UserRepository;
 import com.example.fas.services.UserService;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,8 +38,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
-            BCryptPasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -77,17 +82,21 @@ public class UserServiceImpl implements UserService {
         if (user.getLastName() == null || user.getLastName().isEmpty()) {
             throw new UsernameInvalidException("Last name cannot be null or empty");
         }
-        if (user.getPassword() == null || user.getPassword().isEmpty() ||
-                user.getPassword().length() < 8) {
+        if (user.getPassword() == null || user.getPassword().isEmpty() || user.getPassword().length() < 8) {
             throw new PasswordInvalidException("Password must be at least 8 characters");
         }
         if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
-            throw new PasswordInvalidException(
-                    "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
+            throw new PasswordInvalidException("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
         }
         if (user.getPhoneNumber() == null || user.getPhoneNumber().isEmpty()) {
             throw new PhoneNumberInvalidException("Phone number cannot be null or empty");
         }
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            throw new EmailInvalidException("Email cannot be null or empty");
+        }
+//        if (user.getEmail().matches("\\b(?<num>[a-zA-Z0-9][\\w.-]{2,20}@[\\w-]{3,20}\\.[.\\w-]+)\\b")) {
+//            throw new EmailInvalidException("Email is not valid");
+//        }
         if (user.getPhoneNumber().length() != 10) {
             throw new PhoneNumberInvalidException("Phone number must be exactly 10 digits long");
         }
@@ -114,13 +123,16 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByIdentityCard(user.getIdentityCard())) {
             throw new IdentityCardExistsException("Identity card already exists");
         }
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new EmailExistsException("Email already exists");
+        }
     }
 
     /*
      * This function validates the user ID during user operations.
      *
      * @param Long id - The user ID to validate.
-     * 
+     *
      * @return void - Throws exceptions if validation fails.
      */
     @Override
@@ -130,6 +142,20 @@ public class UserServiceImpl implements UserService {
         }
         if (!userRepository.existsById(id)) {
             throw new UserIDNotFoundException("User with ID " + id + " does not exist");
+        }
+    }
+
+    /**
+     * This function validates the amount during balance operations.
+     * *
+     *
+     * @param amount - The amount to validate.
+     * @return void - Throws exceptions if validation fails.
+     */
+    @Override
+    public void validateAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new AmountInvalidException("Amount must be a positive number");
         }
     }
 
@@ -163,10 +189,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void restoreUser(Long id) {
-        User user = userRepository.findById(id).orElseThrow(
-                () -> new UserIDNotFoundException("User with ID " + id + " not found"));
+        User user = getUserEntityById(id);
         if (user.getStatus() == Status.BANNED) {
-            throw new IllegalStateException("User with ID " + id + " is not allowed to restore");
+            throw new HadUserBannedException("User with ID " + id + " is not allowed to restore");
         } else if (user.getStatus() == Status.ACTIVE) {
             throw new HadUserActiveException("User with ID " + id + " is active");
         }
@@ -174,15 +199,32 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    // THIS FUNCTION GET USER BY ID
+    /**
+     * This function use set role for user
+     *
+     * @param id - ID User
+     * @return void - Nothing
+     */
+    @Override
+    @Transactional
+    public UserResponseDto isAdmin(Long id) {
+        User user = getUserEntityById(id);
+        if (!user.getRole().name().equals("ADMIN") && user.getStatus().name().equals("ACTIVE")) {
+            user.setRole(Role.ADMIN);
+        }
+        return userMapper.toDto(userRepository.saveAndFlush(user));
+    }
+
+    /*
+     * This function retrieves a user by their ID.
+     *
+     * @param Long id - The ID of the user to retrieve.
+     *
+     * @return UserResponseDto - The user details.
+     */
     @Override
     public UserResponseDto getUserById(Long id) {
-        if (id == null || id <= 0) {
-            throw new UserIDInvalidException("User ID must be a positive number");
-        }
-        return userMapper.toDto(
-                userRepository.findById(id).orElseThrow(
-                        () -> new UserIDNotFoundException("User with ID " + id + " not found")));
+        return userMapper.toDto(getUserEntityById(id));
     }
 
     @Override
@@ -201,27 +243,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponseDto getUserByCitizenId(String citizenId) {
-        if (citizenId == null || citizenId.isEmpty()) {
-            throw new IdentityCardInvalidException("Citizen ID cannot be null or empty");
-        } else if (!citizenId.matches("^\\d{12}$")) {
-            throw new IdentityCardExistsException("Citizen ID must contain exactly 12 digits");
-        }
-        UserResponseDto userResponseDto = userMapper.toDto(
-                userRepository.findByIdentityCard(citizenId));
-        if (userResponseDto == null) {
-            throw new IdentityCardExistsException("User with citizen ID " + citizenId + " not found");
-        }
-        return userResponseDto;
-    }
-
-    @Override
     public UserResponseDto getUserByPhoneNumber(String phoneNumber) {
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             throw new PhoneNumberInvalidException("Phone number cannot be null or empty");
         }
-        UserResponseDto userResponseDto = userMapper.toDto(
-                userRepository.findByPhoneNumber(phoneNumber));
+        UserResponseDto userResponseDto = userMapper.toDto(userRepository.findByPhoneNumber(phoneNumber));
         if (userResponseDto == null) {
             throw new PhoneNumberInvalidException("User with phone number " + phoneNumber + " not found");
         }
@@ -246,17 +272,15 @@ public class UserServiceImpl implements UserService {
     /*
      * This function deletes a user by their ID by setting their status to DELETED.
      *
-     * 
+     *
      * @param Long id - The ID of the user to delete.
-     * 
+     *
      * @return void - Throws exceptions if the user cannot be deleted.
      */
     @Override
     @Transactional
     public void deleteUserById(Long id) {
-        validateUserId(id);
-        User user = userRepository.findById(id).orElseThrow(
-                () -> new UserIDNotFoundException("User with ID " + id + " not found"));
+        User user = getUserEntityById(id);
         if (user.getStatus() == Status.DELETED) {
             throw new HadUserDeteleException("User with ID " + id + " is already deleted");
         } else if (user.getStatus() == Status.BANNED) {
@@ -286,7 +310,7 @@ public class UserServiceImpl implements UserService {
      * This function deletes a user by their identity card number.
      *
      * @param String identityCard - The identity card number of the user to delete.
-     * 
+     *
      * @return void - Throws exceptions if the user cannot be deleted.
      */
     @Override
@@ -294,8 +318,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUserByIdentityCard(String identityCard) {
         validateUserByIdentityCard(identityCard);
         UserResponseDto userResponseDto = getUserByIdentityCard(identityCard);
-        User user = userRepository.findById(userResponseDto.getId()).orElseThrow(
-                () -> new UserIDNotFoundException("User with ID " + userResponseDto.getId() + " not found"));
+        User user = getUserEntityById(userResponseDto.getId());
         if (user.getStatus() == Status.DELETED) {
             throw new HadUserDeteleException("User with identity card " + identityCard + " is already deleted");
         } else if (user.getStatus() == Status.BANNED) {
@@ -305,25 +328,117 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    /**
+     * This function retrieves the balance of a user by their ID.
+     * *
+     *
+     * @param id - The ID of the user whose balance is to be retrieved.
+     * @return BigDecimal - The balance of the user.
+     * Throws exceptions if the user ID is invalid or the user is not found.
+     */
     @Override
-    @Transactional
-    public void deleteUserByCitizenId(String citizenId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteUserByCitizenId'");
+    public BigDecimal getBalanceById(Long id) {
+        validateUserId(id);
+        User user = getUserEntityById(id);
+        return user.getBalance();
     }
 
+    /**
+     * This function updates the balance of a user by their ID.
+     * *
+     *
+     * @param id         The ID of the user whose balance is to be updated.
+     * @param newBalance - The new balance to set for the user.
+     * @return void - Throws exceptions if the user ID is invalid, the user is not found,
+     * or the new balance is invalid.
+     */
     @Override
+    @Transactional
+    public void updateBalanceById(Long id, BigDecimal newBalance) {
+        validateAmount(newBalance);
+        User user = getUserEntityById(id);
+        user.setBalance(newBalance);
+    }
+
+    /**
+     * This function increases the balance of a user by a specified amount.
+     * *
+     *
+     * @param id     - The ID of the user whose balance is to be increased.
+     * @param amount - The amount to increase the user's balance by.
+     * @return void - Throws exceptions if the user ID is invalid, the user is not found,
+     * or the amount is invalid.
+     */
+    @Override
+    @Transactional
+    public void increaseBalance(Long id, BigDecimal amount) {
+        User user = getUserEntityById(id);
+        validateAmount(amount);
+        user.setBalance(user.getBalance().add(amount));
+    }
+
+
+    /**
+     * This function decreases the balance of a user by a specified amount.
+     * *
+     *
+     * @param id     - The ID of the user whose balance is to be decreased.
+     * @param amount - The amount to decrease the user's balance by.
+     * @return void - Throws exceptions if the user ID is invalid, the user is not found,
+     * or the amount is invalid.
+     */
+    @Override
+    @Transactional
+    public void decreaseBalance(Long id, BigDecimal amount) {
+        validateAmount(amount);
+        User user = getUserEntityById(id);
+        user.setBalance(user.getBalance().subtract(amount));
+    }
+
+    /**
+     * This function validates the user details during an update operation.
+     *
+     * @param user user - The user details to validate.
+     */
+    @Override
+    @Transactional
     public void validateUpdateUser(UserUpdateRequest user) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'validateUpdateUser'");
     }
 
+    /**
+     * This function retrieves a user entity by their ID.
+     * *
+     *
+     * @param id - The ID of the user to retrieve.
+     * @return User - The user entity.
+     * Throws exceptions if the user ID is invalid or the user is not found.
+     */
+    @Override
+    public User getUserEntityById(Long id) {
+        validateUserId(id);
+        return userRepository.findById(id).orElseThrow(() -> new UserIDNotFoundException("User with ID " + id + " not found"));
+    }
+
+    /*
+     * This function retrieves all users in the system.
+     *
+     * @return List<UserResponseDto> - A list of all users' details.
+     */
     @Override
     public List<UserResponseDto> getAllUsers() {
         List<User> users = userRepository.findAll();
         return userMapper.toDtoList(users);
     }
 
+    /*
+     * This function validates a user by their identity card number.
+     *
+     * @param String identityCard - The identity card number to validate.
+     *
+     * @return void - Throws exceptions if validation fails.
+     */
     @Override
     public void validateUserByIdentityCard(String identityCard) {
         if (identityCard == null || identityCard.isEmpty()) {
@@ -336,8 +451,89 @@ public class UserServiceImpl implements UserService {
             throw new IdentityCardInvalidException("Identity card must contain only digits");
         }
         if (!userRepository.existsByIdentityCard(identityCard)) {
-            throw new IdentityCardInvalidException(
-                    "User with identity card " + identityCard + " does not exist");
+            throw new IdentityCardInvalidException("User with identity card " + identityCard + " does not exist");
+        }
+    }
+
+    /*
+     * This function retrieves a user by their email address.
+     * *
+     *
+     * @param String email - The email address of the user to retrieve.
+     *
+     * @return UserResponseDto - The user details.
+     * Throws exceptions if the email is invalid or the user is not found.
+     */
+    @Override
+    public UserResponseDto getUserByEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            throw new EmailInvalidException("Email cannot be null or empty");
+        }
+        if (email.matches("\\b(?<num>[a-zA-Z0-9][\\w.-]{2,20}@[\\w-]{3,20}\\.[.\\w-]+)\\b")) {
+            throw new EmailInvalidException("Email is not valid");
+        }
+        UserResponseDto userResponseDto = userMapper.toDto(userRepository.findByEmail(email));
+        if (userResponseDto == null) {
+            throw new EmailNotFoundException("User with email " + email + " not found");
+        }
+        return userResponseDto;
+    }
+
+    /*
+     * This function retrieves a user by their avatar URL.
+     * *
+     *
+     * @param String avatarUrl - The avatar URL of the user to retrieve.
+     *
+     * @return UserResponseDto - The user details.
+     * Throws exceptions if the avatar URL is invalid or the user is not found.
+     */
+    @Override
+    public UserResponseDto getUserByAvatarUrl(String avatarUrl) {
+        if (avatarUrl == null || avatarUrl.isEmpty()) {
+            throw new AvatarUrlInvalidException("Avatar URL cannot be null or empty");
+        }
+        UserResponseDto userResponseDto = userMapper.toDto(userRepository.findByAvatarUrl(avatarUrl));
+        if (userResponseDto == null) {
+            throw new AvatarUrlNotFoundException("User with avatar URL " + avatarUrl + " not found");
+        }
+        return userResponseDto;
+    }
+
+    @Override
+    public UserResponseDto getUserByProviderId(String providerId) {
+        if (providerId == null || providerId.isEmpty()) {
+            throw new ProviderIdInvalidException("Provider ID cannot be null or empty");
+        }
+        UserResponseDto userResponseDto = userMapper.toDto(userRepository.findByProviderId(providerId));
+        if (userResponseDto == null) {
+            throw new ProviderIdNotFoundException("User with provider ID " + providerId + " not found");
+        }
+        return userResponseDto;
+    }
+
+    /*
+     * */
+    @Override
+    public Set<UserResponseDto> getUsersByStatus(String status) {
+        return userMapper.toDtoSet(userRepository.findByStatus(status));
+    }
+
+    @Override
+    public Set<UserResponseDto> getUsersByRole(String role) {
+        return userMapper.toDtoSet(userRepository.findByRole(role));
+    }
+
+    @Override
+    public Set<UserResponseDto> getUsersBySocialProvider(String provider) {
+        if (provider == null || provider.isEmpty()) {
+            throw new IllegalArgumentException("Provider cannot be null or empty");
+        }
+        try {
+            com.example.fas.enums.Social social = com.example.fas.enums.Social.valueOf(provider.toUpperCase());
+            return userMapper.toDtoSet(userRepository.findByProvider(social));
+        } catch (IllegalArgumentException ex) {
+            throw new com.example.fas.exceptions.user.invalid.UsernameInvalidException("Invalid social provider: " + provider);
         }
     }
 }

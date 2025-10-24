@@ -1,5 +1,7 @@
 package com.example.fas.dto.UserDto;
 
+import java.math.BigDecimal;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,6 +12,11 @@ public class UserResponseDto {
     private String fullName;
     private String username;
     private String phoneNumber;
+    private String email;
+    private String avatarUrl;
+    private String provider;
+    private String providerId;
+    private BigDecimal balance;
     private String status;
     private String role;
     private String identityCard;

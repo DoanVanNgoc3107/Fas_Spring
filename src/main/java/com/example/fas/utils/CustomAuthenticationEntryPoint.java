@@ -17,23 +17,26 @@ import java.io.IOException;
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
     /**
-     * @param request
-     * @param response
-     * @param authException
-     * @throws IOException
-     * @throws ServletException
+     * This function handles authentication exceptions by sending a JSON response with error details.
+     *
+     * @param request       - HttpServletRequest
+     * @param response      - HttpServletResponse
+     * @param authException - AuthenticationException
+     * @throws IOException      - IOException
+     * @throws ServletException - ServletException
      */
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
-                         AuthenticationException authException) throws IOException, ServletException {
+                         AuthenticationException authException)
+            throws IOException, ServletException {
 
-        // Response chuẩn của GlobalExceptionHandler
         GlobalExceptionHandler.ErrorResponse errorResponse = new GlobalExceptionHandler.ErrorResponse(
                 HttpStatus.UNAUTHORIZED.value(),
                 authException.getClass().getSimpleName(),
-                authException.getMessage(),
+                "Access Denied",
                 request.getRequestURI()
         );
 

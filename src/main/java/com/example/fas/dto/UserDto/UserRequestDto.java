@@ -1,6 +1,6 @@
 package com.example.fas.dto.UserDto;
 
-import jakarta.persistence.Column;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -32,6 +32,9 @@ public class UserRequestDto {
     @NotBlank(message = "CCCD cannot be blank")
     @Pattern(regexp = "^\\d{12}$", message = "CCCD must be exactly 12 digits")
     private String identityCard;
+
+    @Email(message = "Email should be valid")
+    private String email;
 
     @NotNull(message = "Phone number cannot be null")
     @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")

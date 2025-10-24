@@ -1,25 +1,16 @@
-// GlobalExceptionHandler.java (fixed)
 package com.example.fas.exceptions;
 
-import com.example.fas.exceptions.auth.LoginFailedException;
 import com.example.fas.exceptions.user.exists.IdentityCardExistsException;
 import com.example.fas.exceptions.user.exists.PhoneNumberExistsException;
 import com.example.fas.exceptions.user.exists.UsernameExistsException;
-import com.example.fas.exceptions.user.invalid.IdentityCardInvalidException;
-import com.example.fas.exceptions.user.invalid.PasswordInvalidException;
-import com.example.fas.exceptions.user.invalid.PhoneNumberInvalidException;
-import com.example.fas.exceptions.user.invalid.UserIDInvalidException;
-import com.example.fas.exceptions.user.invalid.UserNotNullException;
-import com.example.fas.exceptions.user.invalid.UsernameInvalidException;
-import com.example.fas.exceptions.user.notFound.IdentityCardNotFoundException;
-import com.example.fas.exceptions.user.notFound.PhoneNumberNotFoundException;
-import com.example.fas.exceptions.user.notFound.UserIDNotFoundException;
-import com.example.fas.exceptions.user.notFound.UsernameNotFoundException;
+import com.example.fas.exceptions.user.invalid.*;
+import com.example.fas.exceptions.user.notFound.*;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-// sửa import đúng:
+
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -97,22 +88,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @ExceptionHandler({
-            UsernameExistsException.class,
-            PhoneNumberExistsException.class,
-            IdentityCardExistsException.class
-    })
+    @ExceptionHandler({UsernameExistsException.class, PhoneNumberExistsException.class, IdentityCardExistsException.class})
     public ResponseEntity<ErrorResponse> handlerFieldExistsException(RuntimeException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getClass().getSimpleName(), ex.getMessage(), request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler({
-            UserIDNotFoundException.class,
-            UsernameNotFoundException.class,
-            PhoneNumberNotFoundException.class,
-            IdentityCardNotFoundException.class
-    })
+    @ExceptionHandler({UserIDNotFoundException.class, UsernameNotFoundException.class, PhoneNumberNotFoundException.class, IdentityCardNotFoundException.class, EmailNotFoundException.class})
     public ResponseEntity<ErrorResponse> handlerResourceNotFoundException(RuntimeException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getClass().getSimpleName(), ex.getMessage(), request.getDescription(false));
         Map<String, Object> debugInfo = new HashMap<>();
@@ -122,14 +104,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler({
-            UsernameInvalidException.class,
-            PhoneNumberInvalidException.class,
-            PasswordInvalidException.class,
-            UserIDInvalidException.class,
-            UserNotNullException.class,
-            IdentityCardInvalidException.class
-    })
+    @ExceptionHandler({UsernameInvalidException.class, PhoneNumberInvalidException.class, PasswordInvalidException.class, UserIDInvalidException.class, UserNotNullException.class, IdentityCardInvalidException.class, EmailInvalidException.class})
     public ResponseEntity<ErrorResponse> handlerFieldInvalidException(RuntimeException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getClass().getSimpleName(), ex.getMessage(), request.getDescription(false));
         Map<String, Object> details = new HashMap<>();
@@ -156,7 +131,7 @@ public class GlobalExceptionHandler {
     }
 
     // Map DB constraint violations -> 409 (optional but recommended)
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getClass().getSimpleName(), "Database constraint violation", request.getDescription(false));
         Map<String, Object> debug = new HashMap<>();

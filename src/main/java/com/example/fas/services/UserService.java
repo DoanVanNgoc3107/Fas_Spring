@@ -1,10 +1,16 @@
 package com.example.fas.services;
 
+import java.io.ObjectInputFilter.Status;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
+
+import javax.management.relation.Role;
 
 import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.dto.UserDto.UserUpdateRequest;
+import com.example.fas.enums.Social;
 import com.example.fas.model.User;
 
 public interface UserService {
@@ -16,6 +22,8 @@ public interface UserService {
 
     void restoreUser(Long id);
 
+    UserResponseDto isAdmin(Long id);
+
     // GET /users/{id}
     UserResponseDto getUserById(Long id);
 
@@ -25,11 +33,21 @@ public interface UserService {
 
     UserResponseDto getUserByIdentityCard(String identityCard);
 
-    UserResponseDto getUserByCitizenId(String citizenId);
-
     UserResponseDto getUserByPhoneNumber(String phoneNumber);
 
     UserResponseDto  getUserByFullName(String fullName);
+
+    UserResponseDto getUserByEmail(String email);
+
+    UserResponseDto getUserByAvatarUrl(String avatarUrl);
+
+    UserResponseDto getUserByProviderId(String providerId);
+
+    Set<UserResponseDto> getUsersByStatus(String status);
+
+    Set<UserResponseDto> getUsersByRole(String role);
+
+    Set<UserResponseDto> getUsersBySocialProvider(String provider);
 
     // DELETE /users/{id}
     void deleteUserById(Long id);
@@ -38,16 +56,27 @@ public interface UserService {
     
     void deleteUserByIdentityCard(String identityCard);
 
-    void deleteUserByCitizenId(String citizenId);
+    // Balance
+    BigDecimal getBalanceById(Long id);
 
-    // Validate user details
+    void updateBalanceById(Long id, BigDecimal newBalance);
+
+    void increaseBalance(Long id, BigDecimal amount);
+
+    void decreaseBalance(Long id, BigDecimal amount);
+
+    // Hàm tiện ích để validate dữ liệu người dùng
     void validateUser(UserRequestDto user);
 
     void validateUserId(Long id);
 
+    void validateAmount(BigDecimal amount);
+
     void validateUserByIdentityCard(String identityCard);
 
     void validateUpdateUser(UserUpdateRequest user);
+
+    User getUserEntityById(Long id);
 }
 
 

@@ -5,6 +5,7 @@ import com.example.fas.utils.CustomeAccessDeniedHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -48,7 +49,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
-
                 .cors(cors ->
                         cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF
@@ -60,8 +60,8 @@ public class SecurityConfig {
                 // Bắt đầu định nghĩa quy tắc truy cập
                 .authorizeHttpRequests(auth -> auth
                         // QUY TẮC 1: Cho phép tất cả gọi API login và đăng ký
-                        .requestMatchers("/api/auth/**").permitAll()
-                        // QUY TẮC 2: Mọi request CÒN LẠI phải được xác thực
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
 
@@ -70,11 +70,11 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
+                // Cấu hình OAuth2 Login
+                .oauth2Login(Customizer.withDefaults())
+
                 // THÊM "Người Soát Vé" JWT vào đúng vị trí
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        // BỎ HTTP BASIC (vì dùng JWT)
-        // .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
