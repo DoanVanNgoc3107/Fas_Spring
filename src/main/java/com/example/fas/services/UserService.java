@@ -1,16 +1,11 @@
 package com.example.fas.services;
-
-import java.io.ObjectInputFilter.Status;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
-import javax.management.relation.Role;
-
 import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.dto.UserDto.UserUpdateRequest;
-import com.example.fas.enums.Social;
 import com.example.fas.model.User;
 
 public interface UserService {
@@ -18,11 +13,15 @@ public interface UserService {
     UserResponseDto createUser(UserRequestDto user);
 
     // PUT /users/{id}
-    User updateUser(Long id, UserUpdateRequest userUpdateRequest);
+    UserResponseDto updateUser(UserUpdateRequest userUpdateRequest);
 
     void restoreUser(Long id);
 
     UserResponseDto isAdmin(Long id);
+
+    UserResponseDto isUser(Long id);
+
+    void banUser(Long id);
 
     // GET /users/{id}
     UserResponseDto getUserById(Long id);
@@ -73,8 +72,6 @@ public interface UserService {
     void validateAmount(BigDecimal amount);
 
     void validateUserByIdentityCard(String identityCard);
-
-    void validateUpdateUser(UserUpdateRequest user);
 
     User getUserEntityById(Long id);
 }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.example.fas.dto.UserDto.UserUpdateRequest;
 import org.springframework.stereotype.Component;
 
 import com.example.fas.dto.UserDto.UserRequestDto;
@@ -101,7 +102,7 @@ public class UserMapper {
      * null}
      * 
      * @return a list of populated {@link UserResponseDto} or {@code null} if {@code
-     * users} is {@code null}
+     * users} are {@code null}
      */
     public List<UserResponseDto> toDtoList(List<User> users) {
         if (users == null) {

@@ -4,10 +4,12 @@ import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.dto.UserDto.UserUpdateRequest;
 import com.example.fas.enums.Role;
+import com.example.fas.enums.Social;
 import com.example.fas.enums.Status;
 import com.example.fas.exceptions.user.error.HadUserActiveException;
 import com.example.fas.exceptions.user.error.HadUserBannedException;
 import com.example.fas.exceptions.user.error.HadUserDeteleException;
+import com.example.fas.exceptions.user.error.HadUserRoleAdminException;
 import com.example.fas.exceptions.user.exists.EmailExistsException;
 import com.example.fas.exceptions.user.exists.IdentityCardExistsException;
 import com.example.fas.exceptions.user.exists.PhoneNumberExistsException;
@@ -24,6 +26,7 @@ import com.example.fas.repositories.UserRepository;
 import com.example.fas.services.UserService;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -33,6 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
+    String emailRegex = "/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/";
+
 
     private final UserMapper userMapper;
     private final UserRepository userRepository;
@@ -44,13 +49,6 @@ public class UserServiceImpl implements UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    /*
-     * This function creates a new user in the system.
-     *
-     * @param UserRequestDto dto - The user details for the new user.
-     *
-     * @return UserResponseDto - The created user's details.
-     */
     @Override
     @Transactional
     public UserResponseDto createUser(UserRequestDto dto) {
@@ -64,13 +62,6 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(userRepository.saveAndFlush(user));
     }
 
-    /*
-     * This function validates the user details during creation.
-     *
-     * @param UserRequestDto user - The user details to validate.
-     *
-     * @return void - Throws exceptions if validation fails.
-     */
     @Override
     public void validateUser(UserRequestDto user) {
         if (user == null) {
@@ -91,12 +82,9 @@ public class UserServiceImpl implements UserService {
         if (user.getPhoneNumber() == null || user.getPhoneNumber().isEmpty()) {
             throw new PhoneNumberInvalidException("Phone number cannot be null or empty");
         }
-        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+        if (user.getEmail() == null || user.getEmail().isEmpty() || !user.getEmail().matches(emailRegex)) {
             throw new EmailInvalidException("Email cannot be null or empty");
         }
-//        if (user.getEmail().matches("\\b(?<num>[a-zA-Z0-9][\\w.-]{2,20}@[\\w-]{3,20}\\.[.\\w-]+)\\b")) {
-//            throw new EmailInvalidException("Email is not valid");
-//        }
         if (user.getPhoneNumber().length() != 10) {
             throw new PhoneNumberInvalidException("Phone number must be exactly 10 digits long");
         }
@@ -128,13 +116,6 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    /*
-     * This function validates the user ID during user operations.
-     *
-     * @param Long id - The user ID to validate.
-     *
-     * @return void - Throws exceptions if validation fails.
-     */
     @Override
     public void validateUserId(Long id) {
         if (id == null || id <= 0) {
@@ -145,13 +126,6 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    /**
-     * This function validates the amount during balance operations.
-     * *
-     *
-     * @param amount - The amount to validate.
-     * @return void - Throws exceptions if validation fails.
-     */
     @Override
     public void validateAmount(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -159,33 +133,39 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    /*
-     * This function updates the user details.
-     *
-     * @param Long id - The ID of the user to update.
-     *
-     * @param UserUpdateRequest - The new user details.
-     *
-     * @return User - The updated user details.
-     *
-     * Note: This method is currently unimplemented and throws an
-     * UnsupportedOperationException.
-     */
     @Override
     @Transactional
-    public User updateUser(Long id, UserUpdateRequest userUpdateRequest) {
-        validateUserId(id);
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateUser'");
+    public UserResponseDto updateUser(UserUpdateRequest userUpdateRequest) {
+
+        User user = getUserEntityById(userUpdateRequest.getId());
+
+        if (!userUpdateRequest.getFirstName().isEmpty() || !userUpdateRequest.getLastName().isEmpty()) {
+            user.setFullName(userUpdateRequest.getLastName() + " " + userUpdateRequest.getFirstName());
+        }
+
+        if (!userUpdateRequest.getPassword().isEmpty() && userUpdateRequest.getPassword().length() >= 8 && userUpdateRequest.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
+            user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
+        }
+
+        if (!userUpdateRequest.getPhoneNumber().isEmpty() && userUpdateRequest.getPhoneNumber().matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
+            user.setPhoneNumber(userUpdateRequest.getPhoneNumber());
+        }
+
+        if (!userUpdateRequest.getEmail().isEmpty() && userUpdateRequest.getEmail().matches(emailRegex)) {
+            user.setEmail(userUpdateRequest.getEmail());
+        }
+
+        if (!userUpdateRequest.getIdentityCard().isEmpty() && userUpdateRequest.getIdentityCard().matches("^\\d{12}$")) {
+            user.setIdentityCard(userUpdateRequest.getIdentityCard());
+        }
+
+        if (!userUpdateRequest.getAvatarUrl().isEmpty()) {
+            user.setAvatarUrl(userUpdateRequest.getAvatarUrl());
+        }
+
+        return userMapper.toDto(userRepository.saveAndFlush(user));
     }
 
-    /*
-     * This function restores a user by changing their status to ACTIVE.
-     *
-     * @param Long id - The ID of the user to restore.
-     *
-     * @return void - Throws exceptions if the user cannot be restored.
-     */
     @Override
     @Transactional
     public void restoreUser(Long id) {
@@ -199,29 +179,36 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    /**
-     * This function use set role for user
-     *
-     * @param id - ID User
-     * @return void - Nothing
-     */
     @Override
     @Transactional
     public UserResponseDto isAdmin(Long id) {
         User user = getUserEntityById(id);
         if (!user.getRole().name().equals("ADMIN") && user.getStatus().name().equals("ACTIVE")) {
             user.setRole(Role.ADMIN);
+        } else {
+            throw new HadUserRoleAdminException("User with ID " + id + " is not allowed to be admin");
         }
         return userMapper.toDto(userRepository.saveAndFlush(user));
     }
 
-    /*
-     * This function retrieves a user by their ID.
-     *
-     * @param Long id - The ID of the user to retrieve.
-     *
-     * @return UserResponseDto - The user details.
-     */
+    @Override
+    @Transactional
+    public UserResponseDto isUser(Long id) {
+        User user = getUserEntityById(id);
+        if (!user.getRole().name().equals("USER") && user.getStatus().name().equals("ACTIVE")) {
+            user.setRole(Role.USER);
+        }
+        return userMapper.toDto(userRepository.saveAndFlush(user));
+    }
+
+    @Override
+    public void banUser(Long id) {
+        User user = getUserEntityById(id);
+        if (!user.getStatus().name().equals("BANNED") && user.getStatus().name().equals("ACTIVE")) {
+            user.setStatus(Status.BANNED);
+        }
+    }
+
     @Override
     public UserResponseDto getUserById(Long id) {
         return userMapper.toDto(getUserEntityById(id));
@@ -238,8 +225,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto getUserByIdentityCard(String identityCard) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUserByIdentityCard'");
+        if (identityCard == null || identityCard.length() != 12 || !identityCard.matches("^\\d{12}$")) {
+            throw new IdentityCardInvalidException("Identity card cannot be null or empty");
+        }
+        return userMapper.toDto(userRepository.findByIdentityCard(identityCard));
     }
 
     @Override
@@ -269,14 +258,6 @@ public class UserServiceImpl implements UserService {
         return userResponseDto;
     }
 
-    /*
-     * This function deletes a user by their ID by setting their status to DELETED.
-     *
-     *
-     * @param Long id - The ID of the user to delete.
-     *
-     * @return void - Throws exceptions if the user cannot be deleted.
-     */
     @Override
     @Transactional
     public void deleteUserById(Long id) {
@@ -306,13 +287,6 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    /*
-     * This function deletes a user by their identity card number.
-     *
-     * @param String identityCard - The identity card number of the user to delete.
-     *
-     * @return void - Throws exceptions if the user cannot be deleted.
-     */
     @Override
     @Transactional
     public void deleteUserByIdentityCard(String identityCard) {
@@ -349,8 +323,6 @@ public class UserServiceImpl implements UserService {
      *
      * @param id         The ID of the user whose balance is to be updated.
      * @param newBalance - The new balance to set for the user.
-     * @return void - Throws exceptions if the user ID is invalid, the user is not found,
-     * or the new balance is invalid.
      */
     @Override
     @Transactional
@@ -366,8 +338,6 @@ public class UserServiceImpl implements UserService {
      *
      * @param id     - The ID of the user whose balance is to be increased.
      * @param amount - The amount to increase the user's balance by.
-     * @return void - Throws exceptions if the user ID is invalid, the user is not found,
-     * or the amount is invalid.
      */
     @Override
     @Transactional
@@ -384,8 +354,6 @@ public class UserServiceImpl implements UserService {
      *
      * @param id     - The ID of the user whose balance is to be decreased.
      * @param amount - The amount to decrease the user's balance by.
-     * @return void - Throws exceptions if the user ID is invalid, the user is not found,
-     * or the amount is invalid.
      */
     @Override
     @Transactional
@@ -393,18 +361,6 @@ public class UserServiceImpl implements UserService {
         validateAmount(amount);
         User user = getUserEntityById(id);
         user.setBalance(user.getBalance().subtract(amount));
-    }
-
-    /**
-     * This function validates the user details during an update operation.
-     *
-     * @param user user - The user details to validate.
-     */
-    @Override
-    @Transactional
-    public void validateUpdateUser(UserUpdateRequest user) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'validateUpdateUser'");
     }
 
     /**
@@ -530,10 +486,10 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Provider cannot be null or empty");
         }
         try {
-            com.example.fas.enums.Social social = com.example.fas.enums.Social.valueOf(provider.toUpperCase());
+            Social social = Social.valueOf(provider.toUpperCase());
             return userMapper.toDtoSet(userRepository.findByProvider(social));
         } catch (IllegalArgumentException ex) {
-            throw new com.example.fas.exceptions.user.invalid.UsernameInvalidException("Invalid social provider: " + provider);
+            throw new UsernameInvalidException("Invalid social provider: " + provider);
         }
     }
 }

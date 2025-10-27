@@ -60,14 +60,15 @@ public class SecurityConfig {
                 // Bắt đầu định nghĩa quy tắc truy cập
                 .authorizeHttpRequests(auth -> auth
                         // QUY TẮC 1: Cho phép tất cả gọi API login và đăng ký
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        // Thêm rõ ràng đường dẫn authorization để OAuth2 client không bị chặn
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/oauth2/authorization/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/api/users/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
-                // CHUYỂN SANG STATELESS (Không tạo session)
+                // CHO PHÉP TẠO SESSION KHI CẦN (OAuth2 cần session để lưu AuthorizationRequest)
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 // Cấu hình OAuth2 Login

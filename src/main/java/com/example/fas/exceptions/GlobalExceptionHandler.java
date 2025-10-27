@@ -1,8 +1,10 @@
 package com.example.fas.exceptions;
 
-import com.example.fas.exceptions.user.exists.IdentityCardExistsException;
-import com.example.fas.exceptions.user.exists.PhoneNumberExistsException;
-import com.example.fas.exceptions.user.exists.UsernameExistsException;
+import com.example.fas.exceptions.user.error.HadUserActiveException;
+import com.example.fas.exceptions.user.error.HadUserBannedException;
+import com.example.fas.exceptions.user.error.HadUserDeteleException;
+import com.example.fas.exceptions.user.error.HadUserRoleAdminException;
+import com.example.fas.exceptions.user.exists.*;
 import com.example.fas.exceptions.user.invalid.*;
 import com.example.fas.exceptions.user.notFound.*;
 
@@ -13,6 +15,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -79,6 +82,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getClass().getSimpleName(), "An unexpected error occurred. Please try again later.", request.getDescription(false));
         Map<String, Object> debugInfo = new HashMap<>();
@@ -88,10 +92,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @ExceptionHandler({UsernameExistsException.class, PhoneNumberExistsException.class, IdentityCardExistsException.class})
+    @ExceptionHandler({UsernameExistsException.class, PhoneNumberExistsException.class, IdentityCardExistsException.class, EmailExistsException.class})
     public ResponseEntity<ErrorResponse> handlerFieldExistsException(RuntimeException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getClass().getSimpleName(), ex.getMessage(), request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler({HadUserActiveException.class, HadUserBannedException.class, HadUserDeteleException.class, HadUserRoleAdminException.class})
+    public ResponseEntity<ErrorResponse> handlerSetFieldException(RuntimeException ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getClass().getSimpleName(), ex.getMessage(), request.getDescription(false));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler({UserIDNotFoundException.class, UsernameNotFoundException.class, PhoneNumberNotFoundException.class, IdentityCardNotFoundException.class, EmailNotFoundException.class})
@@ -138,5 +148,20 @@ public class GlobalExceptionHandler {
         debug.put("original_error", ex.getMessage());
         errorResponse.setDetails(debug);
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    // Exception handles login social
+    @ExceptionHandler({
+            OAuth2AuthenticationException.class,
+            AccountSocialExistsException.class,
+            ProviderNotSupportException.class
+    })
+    public ResponseEntity<ErrorResponse> handleAccountSocialExistsException(RuntimeException ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getClass().getSimpleName(),
+                ex.getMessage(),
+                request.getDescription(false));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

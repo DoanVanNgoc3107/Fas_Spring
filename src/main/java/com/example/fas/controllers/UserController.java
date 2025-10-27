@@ -10,7 +10,10 @@ import com.example.fas.model.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.math.BigDecimal;
 import java.util.List;
+
+import static com.example.fas.model.ApiResponse.success;
 
 @RestController
 @RequestMapping("/api/users")
@@ -29,13 +32,13 @@ public class UserController {
      * */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable Long id) {
-        UserResponseDto userDto = userServiceImpl.getUserById(id);
-        ApiResponse<UserResponseDto> response = new ApiResponse<>(
+        var response = new ApiResponse<>(
                 HttpStatus.OK,
                 "User retrieved successfully",
-                userDto,
-                null);
-        return new ResponseEntity<>(ApiResponse.success("Had created user complete.!", userDto), HttpStatus.CREATED);
+                userServiceImpl.getUserById(id),
+                null
+        );
+        return ResponseEntity.ok(response);
     }
 
     /*
@@ -44,11 +47,7 @@ public class UserController {
     @PostMapping("/")
     public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserRequestDto userRequest) {
         UserResponseDto createdUser = userServiceImpl.createUser(userRequest);
-        ApiResponse<UserResponseDto> response = new ApiResponse<>(
-                HttpStatus.CREATED,
-                "User created successfully",
-                createdUser,
-                null);
+        ApiResponse<UserResponseDto> response = new ApiResponse<>(HttpStatus.CREATED, "User created successfully", createdUser, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -57,11 +56,7 @@ public class UserController {
     @GetMapping("/")
     public ResponseEntity<ApiResponse<List<UserResponseDto>>> getAllUsers() {
         List<UserResponseDto> listUserDto = userServiceImpl.getAllUsers();
-        var response = new ApiResponse<List<UserResponseDto>>(
-                HttpStatus.OK,
-                "All users retrieved successfully",
-                listUserDto,
-                null);
+        var response = new ApiResponse<List<UserResponseDto>>(HttpStatus.OK, "All users retrieved successfully", listUserDto, null);
         return ResponseEntity.ok(response);
     }
 
@@ -69,12 +64,86 @@ public class UserController {
      * */
     @PutMapping("/is-admin/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> isAdmin(@PathVariable Long id) {
-        var response = new ApiResponse<UserResponseDto>(
+        var response = new ApiResponse<UserResponseDto>(HttpStatus.OK, "Set role ADMIN success.!", userServiceImpl.isAdmin(id), null);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /*
+     * */
+    @PutMapping("/is-user/{id}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> isUser(@PathVariable Long id) {
+        var response = new ApiResponse<>(HttpStatus.OK, "Set role USER success.!", userServiceImpl.isUser(id), null);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /* Hàm khóa tài khoản user
+     * API */
+    @PutMapping("/banned/{id}")
+    public ResponseEntity<ApiResponse<Void>> banned(@PathVariable Long id) {
+        userServiceImpl.banUser(id);
+        return new ResponseEntity<>(success("Banned user success.!", null), HttpStatus.NO_CONTENT);
+    }
+
+    /* Hàm khôi phục tài khoản user
+     * API
+     * */
+    @PutMapping("/restore/{id}")
+    public ResponseEntity<ApiResponse<Void>> restoreUser(@PathVariable Long id) {
+        userServiceImpl.restoreUser(id);
+        return new ResponseEntity<>(success("Restore user success.!", null), HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/{identityCard}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserByIdentityCard(@PathVariable String identityCard) {
+        var response = new ApiResponse<>(
                 HttpStatus.OK,
-                "Set role ADMIN success.!",
-                userServiceImpl.isAdmin(id),
+                "User retrieved successfully",
+                userServiceImpl.getUserByIdentityCard(identityCard),
                 null
         );
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{fullName}")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getUserByFullName(@PathVariable String fullName) {
+        var response = new ApiResponse<>(
+                HttpStatus.OK,
+                "User retrieved successfully",
+                userServiceImpl.getUserByFullName(fullName),
+                null
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/delete/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+        userServiceImpl.deleteUserById(id);
+        return new ResponseEntity<>(success("Delete user success.!", null), HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/delete/{username}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String username) {
+        userServiceImpl.deleteUserByUsername(username);
+        return new ResponseEntity<>(success("Delete user success.!", null), HttpStatus.NO_CONTENT);
+    }
+
+    // LOGIC BALANCE
+    @GetMapping("/balance/{id}")
+    public ResponseEntity<ApiResponse<BigDecimal>> getBalanceById(@PathVariable Long id) {
+        BigDecimal balance = userServiceImpl.getBalanceById(id);
+        var response = new ApiResponse<>(HttpStatus.OK, "Balance retrieved successfully", balance, null);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/balance/update/{id}")
+    public ResponseEntity<ApiResponse<Void>> updateBalanceById(@PathVariable Long id, @RequestBody BigDecimal newBalance) {
+        userServiceImpl.updateBalanceById(id, newBalance);
+        return new ResponseEntity<>(success("Update balance success.!", null), HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/balance/increase/{id}")
+    public ResponseEntity<ApiResponse<Void>> increaseBalance(@PathVariable Long id, @RequestBody BigDecimal amount) {
+        userServiceImpl.increaseBalance(id, amount);
+        return new ResponseEntity<>(success("Increase balance success.!", null), HttpStatus.NO_CONTENT);
     }
 }

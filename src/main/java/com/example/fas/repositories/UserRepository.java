@@ -4,12 +4,14 @@ import com.example.fas.model.User;
 import com.example.fas.enums.Social;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
     // Check exists by username, identity card, phone number
     boolean existsByUsername(String username);
 
@@ -40,6 +42,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Match the entity field name 'provider' (enum Social)
     List<User> findByProvider(Social provider);
+
+    Optional<User> findByProviderAndProviderId(Social provider, String providerSpecificId);
 
     // Query by username, identity card, phone number
     long count();

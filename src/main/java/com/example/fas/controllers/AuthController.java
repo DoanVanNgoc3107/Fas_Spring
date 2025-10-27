@@ -4,6 +4,8 @@ import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.authDto.LoginResponseDto;
 import com.example.fas.security.JwtService;
 import com.example.fas.serviceImpl.UserServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.fas.dto.authDto.LoginRequestDto;
 import com.example.fas.model.ApiResponse;
 
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,13 +30,11 @@ public class AuthController {
 
     private final JwtService jwtService;
 
-    public AuthController(DaoAuthenticationProvider daoAuthenticationProvider, JwtService jwtService,
-                          UserServiceImpl userService) {
+    public AuthController(DaoAuthenticationProvider daoAuthenticationProvider, JwtService jwtService, UserServiceImpl userService) {
         this.daoAuthenticationProvider = daoAuthenticationProvider;
         this.userService = userService;
         this.jwtService = jwtService;
     }
-
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserRequestDto>> registerPage(@Valid @RequestBody UserRequestDto userDto) {
@@ -47,18 +46,19 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> loginPage(@Valid @RequestBody LoginRequestDto loginDto) {
         UsernamePasswordAuthenticationToken user = new UsernamePasswordAuthenticationToken(
-                loginDto.getUsername(), loginDto.getPassword());
+                loginDto.getUsername(), loginDto.getPassword()
+        );
         Authentication auth = this.daoAuthenticationProvider.authenticate(user);
         String token = this.jwtService.generateToken(auth.getName());
         var loginResponseDto = new LoginResponseDto();
         loginResponseDto.setToken(token);
+        loginResponseDto.setUserDto(userService.getUserByUsername(loginDto.getUsername()));
         var apiResponse = ApiResponse.success("Login success.", loginResponseDto);
         return ResponseEntity.ok(apiResponse);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Object>> logoutPage() {        // Invalidate the JWT token or perform any logout logic here
-        // Invalidate the JWT token or perform any logout logic here
+    public ResponseEntity<ApiResponse<Object>> logoutPage(HttpServletRequest request) {
         var apiResponse = ApiResponse.success("Logout successful.", null);
         return ResponseEntity.ok(apiResponse);
     }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -25,16 +24,13 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Full name can not be blank")
     @Size(min = 3, message = "Full name must be more than 3 characters")
     private String fullName;
 
-    @NotBlank(message = "Username can not be blank")
     @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
     private String username;
 
@@ -46,7 +42,7 @@ public class User {
     private Status status;
 
     @Email(message = "Email should be valid")
-    @Column(unique = true) // Khong cho phep trung email
+    @Column(unique = true)
     private String email;
 
     @Enumerated(EnumType.STRING)
@@ -64,7 +60,7 @@ public class User {
 
     @Builder.Default
     @NotNull(message = "Balance cannot be null")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Balance must be non-negative")
+    @DecimalMin(value = "0.0", message = "Balance must be non-negative")
     private BigDecimal balance = BigDecimal.ZERO;
 
     @Column(unique = true, length = 12)

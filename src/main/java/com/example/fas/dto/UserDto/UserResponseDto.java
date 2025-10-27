@@ -2,6 +2,7 @@ package com.example.fas.dto.UserDto;
 
 import java.math.BigDecimal;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 

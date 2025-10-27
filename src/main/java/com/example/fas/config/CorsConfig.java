@@ -38,6 +38,6 @@ public class CorsConfig {
         // ✅ Apply CORS to all endpoints
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-        return source; // ✅ SỬA: return source thay vì configuration
+        return source;
     }
 }
