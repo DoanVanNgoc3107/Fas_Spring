@@ -26,7 +26,6 @@ import com.example.fas.repositories.UserRepository;
 import com.example.fas.services.UserService;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -36,8 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserServiceImpl implements UserService {
-    String emailRegex = "/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/";
-
+    String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
 
     private final UserMapper userMapper;
     private final UserRepository userRepository;
@@ -77,42 +75,33 @@ public class UserServiceImpl implements UserService {
             throw new PasswordInvalidException("Password must be at least 8 characters");
         }
         if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
-            throw new PasswordInvalidException("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
-        }
-        if (user.getPhoneNumber() == null || user.getPhoneNumber().isEmpty()) {
-            throw new PhoneNumberInvalidException("Phone number cannot be null or empty");
-        }
-        if (user.getEmail() == null || user.getEmail().isEmpty() || !user.getEmail().matches(emailRegex)) {
-            throw new EmailInvalidException("Email cannot be null or empty");
-        }
-        if (user.getPhoneNumber().length() != 10) {
-            throw new PhoneNumberInvalidException("Phone number must be exactly 10 digits long");
-        }
-        if (!user.getPhoneNumber().matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
-            throw new PhoneNumberInvalidException("Phone number is not valid in Vietnam");
-        }
-        if (user.getIdentityCard() == null || user.getIdentityCard().isEmpty()) {
-            throw new PhoneNumberInvalidException("Identity card cannot be null or empty");
-        }
-        if (user.getIdentityCard().length() != 12) {
-            throw new PhoneNumberInvalidException("Identity card must be exactly 12 digits long");
-        }
-        if (!user.getIdentityCard().matches("^\\d{12}$")) {
-            throw new PhoneNumberInvalidException("Identity card must contain only digits");
-        }
+            if (!user.getPhoneNumber().matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
+                throw new PhoneNumberInvalidException("Phone number is not valid in Vietnam");
+            }
+            if (user.getIdentityCard() == null || user.getIdentityCard().isEmpty()) {
+                throw new PhoneNumberInvalidException("Identity card cannot be null or empty");
+            }
+            if (user.getIdentityCard().length() != 12) {
+                throw new PhoneNumberInvalidException("Identity card must be exactly 12 digits long");
+            }
+            if (!user.getIdentityCard().matches("^\\d{12}$")) {
+                throw new PhoneNumberInvalidException("Identity card must contain only digits");
+            }
 
-        // Validate of repository
-        if (userRepository.existsByUsername(user.getUsername())) {
-            throw new UsernameExistsException("Username already exists");
-        }
-        if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
-            throw new PhoneNumberExistsException("Phone number already exists");
-        }
-        if (userRepository.existsByIdentityCard(user.getIdentityCard())) {
-            throw new IdentityCardExistsException("Identity card already exists");
-        }
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new EmailExistsException("Email already exists");
+            // Validate of repository
+            if (userRepository.existsByUsername(user.getUsername())) {
+                throw new UsernameExistsException("Username already exists");
+            }
+            if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
+                throw new PhoneNumberExistsException("Phone number already exists");
+            }
+            if (userRepository.existsByIdentityCard(user.getIdentityCard())) {
+                throw new IdentityCardExistsException("Identity card already exists");
+            }
+            // Sử dụng email đã được chuẩn hoá (trim + lowercase) để so sánh nhất quán
+            if (userRepository.existsByEmail(user.getEmail().trim().toLowerCase())) {
+                throw new EmailExistsException("Email already exists");
+            }
         }
     }
 
@@ -151,8 +140,16 @@ public class UserServiceImpl implements UserService {
             user.setPhoneNumber(userUpdateRequest.getPhoneNumber());
         }
 
-        if (!userUpdateRequest.getEmail().isEmpty() && userUpdateRequest.getEmail().matches(emailRegex)) {
-            user.setEmail(userUpdateRequest.getEmail());
+        if (!userUpdateRequest.getEmail().isEmpty()) {
+            String normalized = userUpdateRequest.getEmail().trim().toLowerCase();
+            if (!normalized.matches(emailRegex)) {
+                throw new EmailInvalidException("Email is not valid");
+            }
+            // Nếu email mới đã tồn tại cho một user khác thì không cho cập nhật
+            if (userRepository.existsByEmail(normalized) && !normalized.equals(user.getEmail())) {
+                throw new EmailExistsException("Email already exists");
+            }
+            user.setEmail(normalized);
         }
 
         if (!userUpdateRequest.getIdentityCard().isEmpty() && userUpdateRequest.getIdentityCard().matches("^\\d{12}$")) {
@@ -425,12 +422,14 @@ public class UserServiceImpl implements UserService {
         if (email == null || email.isEmpty()) {
             throw new EmailInvalidException("Email cannot be null or empty");
         }
-        if (email.matches("\\b(?<num>[a-zA-Z0-9][\\w.-]{2,20}@[\\w-]{3,20}\\.[.\\w-]+)\\b")) {
+        // Chuẩn hoá email trước khi kiểm tra và truy vấn
+        String normalized = email.trim().toLowerCase();
+        if (!normalized.matches(emailRegex)) {
             throw new EmailInvalidException("Email is not valid");
         }
-        UserResponseDto userResponseDto = userMapper.toDto(userRepository.findByEmail(email));
+        UserResponseDto userResponseDto = userMapper.toDto(userRepository.findByEmail(normalized));
         if (userResponseDto == null) {
-            throw new EmailNotFoundException("User with email " + email + " not found");
+            throw new EmailNotFoundException("User with email " + normalized + " not found");
         }
         return userResponseDto;
     }

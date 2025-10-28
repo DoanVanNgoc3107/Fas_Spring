@@ -6,7 +6,6 @@ import com.example.fas.security.JwtService;
 import com.example.fas.serviceImpl.UserServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -40,7 +39,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserRequestDto>> registerPage(@Valid @RequestBody UserRequestDto userDto) {
         userService.createUser(userDto);
         var apiResponse = ApiResponse.success("Registration successful.", userDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+        return ResponseEntity.ok(apiResponse);
     }
 
     @PostMapping("/login")

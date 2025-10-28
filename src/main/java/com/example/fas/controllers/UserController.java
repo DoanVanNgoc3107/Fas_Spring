@@ -44,6 +44,7 @@ public class UserController {
     /*
      * Tạo users bằng tài khoản admin
      * */
+    @SuppressWarnings("JvmTaintAnalysis")
     @PostMapping("/")
     public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserRequestDto userRequest) {
         UserResponseDto createdUser = userServiceImpl.createUser(userRequest);

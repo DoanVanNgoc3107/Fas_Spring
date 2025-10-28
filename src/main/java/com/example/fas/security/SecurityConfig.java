@@ -2,6 +2,7 @@ package com.example.fas.security;
 
 import com.example.fas.utils.CustomAuthenticationEntryPoint;
 import com.example.fas.utils.CustomeAccessDeniedHandler;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -9,10 +10,10 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy; // Thêm import này
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Thêm import này
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
@@ -21,15 +22,12 @@ public class SecurityConfig {
 
     private final CustomsUserDetailsService customsUserDetailsService;
     private final PasswordEncoder passwordEncoder;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter; // Đã inject
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomeAccessDeniedHandler customAccessDeniedHandler;
 
-    // Constructor đã đúng
-    public SecurityConfig(CustomsUserDetailsService customsUserDetailsService, PasswordEncoder passwordEncoder,
-                          JwtAuthenticationFilter jwtAuthenticationFilter, CustomeAccessDeniedHandler customAccessDeniedHandler,
-                          CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
+    public SecurityConfig(CustomsUserDetailsService customsUserDetailsService, PasswordEncoder passwordEncoder, JwtAuthenticationFilter jwtAuthenticationFilter, CustomeAccessDeniedHandler customAccessDeniedHandler, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
         this.customAccessDeniedHandler = customAccessDeniedHandler;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -47,29 +45,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
-        http
-                .cors(cors ->
-                        cors.configurationSource(corsConfigurationSource))
-                .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource)
+            throws Exception {
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource)).csrf(AbstractHttpConfigurer::disable) // Tắt CSRF
 
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
-                        .accessDeniedHandler(customAccessDeniedHandler))
+                .exceptionHandling(
+                        exceptions -> exceptions.authenticationEntryPoint(customAuthenticationEntryPoint).accessDeniedHandler(customAccessDeniedHandler))
 
-                // Bắt đầu định nghĩa quy tắc truy cập
-                .authorizeHttpRequests(auth -> auth
-                        // QUY TẮC 1: Cho phép tất cả gọi API login và đăng ký
-                        // Thêm rõ ràng đường dẫn authorization để OAuth2 client không bị chặn
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/oauth2/authorization/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers("/api/users/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**", "/oauth2/**", "/oauth2/authorization/**", "/login/oauth2/**", "/login").permitAll().requestMatchers("/api/users/**").permitAll().anyRequest().authenticated())
 
                 // CHO PHÉP TẠO SESSION KHI CẦN (OAuth2 cần session để lưu AuthorizationRequest)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
+
+                .formLogin(Customizer.withDefaults())
 
                 // Cấu hình OAuth2 Login
                 .oauth2Login(Customizer.withDefaults())
