@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.example.fas.dto.UserDto.UserUpdateRequest;
 import org.springframework.stereotype.Component;
 
 import com.example.fas.dto.UserDto.UserRequestDto;
@@ -41,7 +40,7 @@ public class UserMapper {
      *
      * @param user the {@link User} entity to convert; may be {@code null}
      * @return a populated {@link UserResponseDto} or {@code null} if {@code user}
-     *         is {@code null}
+     * is {@code null}
      */
     public UserResponseDto toDto(User user) {
         if (user == null) {
@@ -77,7 +76,7 @@ public class UserMapper {
      *
      * @param requestDto the request DTO; may be {@code null}
      * @return a new {@link User} entity populated from the DTO, or {@code null} if
-     *         {@code dto} is {@code null}
+     * {@code dto} is {@code null}
      */
     public User toEntity(UserRequestDto requestDto) {
         if (requestDto == null) {
@@ -100,7 +99,7 @@ public class UserMapper {
      *
      * @param users the list of {@link User} entities to convert; may be {@code
      * null}
-     * 
+     *
      * @return a list of populated {@link UserResponseDto} or {@code null} if {@code
      * users} are {@code null}
      */
@@ -112,7 +111,7 @@ public class UserMapper {
     }
 
     /*
-    * This */
+     * This */
     public Set<UserResponseDto> toDtoSet(List<User> users) {
         if (users == null) {
             return null;

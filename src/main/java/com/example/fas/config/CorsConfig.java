@@ -14,8 +14,7 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // ✅ Cho phép origins - Updated for production
+        
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000", // Local development
                 "https://your-production-domain.com" // Production domain

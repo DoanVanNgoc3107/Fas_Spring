@@ -2,7 +2,6 @@ package com.example.fas.specifications;
 
 import com.example.fas.model.User;
 import com.example.fas.enums.Status;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils; // Helper của Spring, kiểm tra null/rỗng/khoảng trắng
 import jakarta.persistence.criteria.Predicate;

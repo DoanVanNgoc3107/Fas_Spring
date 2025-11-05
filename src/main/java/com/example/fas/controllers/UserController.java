@@ -16,7 +16,7 @@ import java.util.List;
 import static com.example.fas.model.ApiResponse.success;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     private final UserServiceImpl userServiceImpl;
@@ -44,7 +44,6 @@ public class UserController {
     /*
      * Tạo users bằng tài khoản admin
      * */
-    @SuppressWarnings("JvmTaintAnalysis")
     @PostMapping("/")
     public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserRequestDto userRequest) {
         UserResponseDto createdUser = userServiceImpl.createUser(userRequest);
@@ -94,7 +93,8 @@ public class UserController {
         return new ResponseEntity<>(success("Restore user success.!", null), HttpStatus.NO_CONTENT);
     }
 
-    @GetMapping("/{identityCard}")
+    // Make identity and fullname endpoints explicit to avoid ambiguous path variables
+    @GetMapping("/identity/{identityCard}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserByIdentityCard(@PathVariable String identityCard) {
         var response = new ApiResponse<>(
                 HttpStatus.OK,
@@ -105,7 +105,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{fullName}")
+    @GetMapping("/fullname/{fullName}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserByFullName(@PathVariable String fullName) {
         var response = new ApiResponse<>(
                 HttpStatus.OK,
@@ -116,14 +116,15 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+    // Disambiguate delete endpoints (delete by id vs delete by username)
+    @PutMapping("/delete/id/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteUserById(@PathVariable Long id) {
         userServiceImpl.deleteUserById(id);
         return new ResponseEntity<>(success("Delete user success.!", null), HttpStatus.NO_CONTENT);
     }
 
-    @PutMapping("/delete/{username}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String username) {
+    @PutMapping("/delete/username/{username}")
+    public ResponseEntity<ApiResponse<Void>> deleteUserByUsername(@PathVariable String username) {
         userServiceImpl.deleteUserByUsername(username);
         return new ResponseEntity<>(success("Delete user success.!", null), HttpStatus.NO_CONTENT);
     }

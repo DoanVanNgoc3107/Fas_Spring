@@ -75,8 +75,8 @@ public class ApiResponse<T> {
         }
 
         /*
-        * Phương thức build để tạo đối tượng ApiResponse từ builder
-        * */
+         * Phương thức build để tạo đối tượng ApiResponse từ builder
+         * */
         public ApiResponse<T> build() {
             ApiResponse<T> response = new ApiResponse<>();
             response.setStatus(this.status);

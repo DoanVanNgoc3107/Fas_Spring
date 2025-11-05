@@ -41,7 +41,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
+                           BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -75,33 +76,40 @@ public class UserServiceImpl implements UserService {
             throw new PasswordInvalidException("Password must be at least 8 characters");
         }
         if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
-            if (!user.getPhoneNumber().matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
-                throw new PhoneNumberInvalidException("Phone number is not valid in Vietnam");
-            }
-            if (user.getIdentityCard() == null || user.getIdentityCard().isEmpty()) {
-                throw new PhoneNumberInvalidException("Identity card cannot be null or empty");
-            }
-            if (user.getIdentityCard().length() != 12) {
-                throw new PhoneNumberInvalidException("Identity card must be exactly 12 digits long");
-            }
-            if (!user.getIdentityCard().matches("^\\d{12}$")) {
-                throw new PhoneNumberInvalidException("Identity card must contain only digits");
-            }
+            throw new PasswordInvalidException(
+                    "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
+        }
+        if (!user.getPhoneNumber().matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
+            throw new PhoneNumberInvalidException("Phone number is not valid in Vietnam");
+        }
+        if (user.getIdentityCard() == null || user.getIdentityCard().isEmpty()) {
+            throw new PhoneNumberInvalidException("Identity card cannot be null or empty");
+        }
+        if (user.getIdentityCard().length() != 12) {
+            throw new PhoneNumberInvalidException("Identity card must be exactly 12 digits long");
+        }
+        if (!user.getIdentityCard().matches("^\\d{12}$")) {
+            throw new PhoneNumberInvalidException("Identity card must contain only digits");
+        }
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            throw new EmailInvalidException("Email cannot be null or empty");
+        }
+        if (!user.getEmail().matches(emailRegex)) {
+            throw new EmailInvalidException("Email is not valid");
+        }
 
-            // Validate of repository
-            if (userRepository.existsByUsername(user.getUsername())) {
-                throw new UsernameExistsException("Username already exists");
-            }
-            if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
-                throw new PhoneNumberExistsException("Phone number already exists");
-            }
-            if (userRepository.existsByIdentityCard(user.getIdentityCard())) {
-                throw new IdentityCardExistsException("Identity card already exists");
-            }
-            // Sử dụng email đã được chuẩn hoá (trim + lowercase) để so sánh nhất quán
-            if (userRepository.existsByEmail(user.getEmail().trim().toLowerCase())) {
-                throw new EmailExistsException("Email already exists");
-            }
+        // Validate of repository
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new UsernameExistsException("Username already exists");
+        }
+        if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
+            throw new PhoneNumberExistsException("Phone number already exists");
+        }
+        if (userRepository.existsByIdentityCard(user.getIdentityCard())) {
+            throw new IdentityCardExistsException("Identity card already exists");
+        }
+        if (userRepository.existsByEmail(user.getEmail().trim().toLowerCase())) {
+            throw new EmailExistsException("Email already exists");
         }
     }
 
@@ -132,11 +140,14 @@ public class UserServiceImpl implements UserService {
             user.setFullName(userUpdateRequest.getLastName() + " " + userUpdateRequest.getFirstName());
         }
 
-        if (!userUpdateRequest.getPassword().isEmpty() && userUpdateRequest.getPassword().length() >= 8 && userUpdateRequest.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
+        if (!userUpdateRequest.getPassword().isEmpty() && userUpdateRequest.getPassword().length() >= 8
+                && userUpdateRequest.getPassword()
+                .matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
             user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
         }
 
-        if (!userUpdateRequest.getPhoneNumber().isEmpty() && userUpdateRequest.getPhoneNumber().matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
+        if (!userUpdateRequest.getPhoneNumber().isEmpty() && userUpdateRequest.getPhoneNumber()
+                .matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
             user.setPhoneNumber(userUpdateRequest.getPhoneNumber());
         }
 
@@ -145,14 +156,14 @@ public class UserServiceImpl implements UserService {
             if (!normalized.matches(emailRegex)) {
                 throw new EmailInvalidException("Email is not valid");
             }
-            // Nếu email mới đã tồn tại cho một user khác thì không cho cập nhật
             if (userRepository.existsByEmail(normalized) && !normalized.equals(user.getEmail())) {
                 throw new EmailExistsException("Email already exists");
             }
             user.setEmail(normalized);
         }
 
-        if (!userUpdateRequest.getIdentityCard().isEmpty() && userUpdateRequest.getIdentityCard().matches("^\\d{12}$")) {
+        if (!userUpdateRequest.getIdentityCard().isEmpty()
+                && userUpdateRequest.getIdentityCard().matches("^\\d{12}$")) {
             user.setIdentityCard(userUpdateRequest.getIdentityCard());
         }
 
@@ -344,7 +355,6 @@ public class UserServiceImpl implements UserService {
         user.setBalance(user.getBalance().add(amount));
     }
 
-
     /**
      * This function decreases the balance of a user by a specified amount.
      * *
@@ -371,7 +381,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUserEntityById(Long id) {
         validateUserId(id);
-        return userRepository.findById(id).orElseThrow(() -> new UserIDNotFoundException("User with ID " + id + " not found"));
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserIDNotFoundException("User with ID " + id + " not found"));
     }
 
     /*

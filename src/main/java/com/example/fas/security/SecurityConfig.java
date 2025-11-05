@@ -5,8 +5,12 @@ import com.example.fas.utils.CustomeAccessDeniedHandler;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,59 +18,108 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
-    private final CustomsUserDetailsService customsUserDetailsService;
+    private static final String[] API_PUBLIC_ENDPOINTS = {
+        "/api/v1/auth/**",
+        "/v3/api-docs/**",
+        "/swagger-ui/**",
+        "/swagger-ui.html"
+    };
+
+    private static final String[] WEB_PUBLIC_ENDPOINTS = {
+        "/",
+        "/login",
+        "/oauth2/**",
+        "/error",
+        "/css/**",
+        "/js/**",
+        "/images/**"
+    };
+
+    private final CustomsUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomeAccessDeniedHandler accessDeniedHandler;
+    private final OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService;
 
-    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
-    private final CustomeAccessDeniedHandler customAccessDeniedHandler;
-
-    public SecurityConfig(CustomsUserDetailsService customsUserDetailsService, PasswordEncoder passwordEncoder, JwtAuthenticationFilter jwtAuthenticationFilter, CustomeAccessDeniedHandler customAccessDeniedHandler, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
-        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
-        this.customAccessDeniedHandler = customAccessDeniedHandler;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.customsUserDetailsService = customsUserDetailsService;
-        this.passwordEncoder = passwordEncoder;
+    public SecurityConfig(CustomsUserDetailsService userDetailsService,
+              PasswordEncoder passwordEncoder,
+              JwtAuthenticationFilter jwtAuthenticationFilter,
+              CustomeAccessDeniedHandler accessDeniedHandler,
+              CustomAuthenticationEntryPoint authenticationEntryPoint,
+              CustomOAuth2UserService oAuth2UserService) {
+    this.userDetailsService = userDetailsService;
+    this.passwordEncoder = passwordEncoder;
+    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    this.accessDeniedHandler = accessDeniedHandler;
+    this.authenticationEntryPoint = authenticationEntryPoint;
+    this.oAuth2UserService = oAuth2UserService;
     }
 
-    // Bean daoAuthenticationProvider đã đúng
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(customsUserDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
-        return provider;
+    DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+    provider.setUserDetailsService(userDetailsService);
+    provider.setPasswordEncoder(passwordEncoder);
+    return provider;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource)
-            throws Exception {
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource)).csrf(AbstractHttpConfigurer::disable) // Tắt CSRF
+    public AuthenticationManager authenticationManager() {
+        return new ProviderManager(Collections.singletonList(daoAuthenticationProvider()));
+    }
 
-                .exceptionHandling(
-                        exceptions -> exceptions.authenticationEntryPoint(customAuthenticationEntryPoint).accessDeniedHandler(customAccessDeniedHandler))
+    @Bean
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    http.securityMatcher("/api/**")
+        .cors(cors -> cors.configurationSource(corsConfigurationSource))
+        .csrf(AbstractHttpConfigurer::disable)
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint(authenticationEntryPoint)
+            .accessDeniedHandler(accessDeniedHandler))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(API_PUBLIC_ENDPOINTS).permitAll()
+            .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
+            .anyRequest().authenticated())
+        .authenticationProvider(daoAuthenticationProvider())
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .formLogin(AbstractHttpConfigurer::disable)
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .logout(AbstractHttpConfigurer::disable);
+    return http.build();
+    }
 
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**", "/oauth2/**", "/oauth2/authorization/**", "/login/oauth2/**", "/login").permitAll().requestMatchers("/api/users/**").permitAll().anyRequest().authenticated())
-
-                // CHO PHÉP TẠO SESSION KHI CẦN (OAuth2 cần session để lưu AuthorizationRequest)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                )
-
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource))
+        .csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(WEB_PUBLIC_ENDPOINTS).permitAll()
+            .anyRequest().authenticated())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .formLogin(Customizer.withDefaults())
-
-                // Cấu hình OAuth2 Login
-                .oauth2Login(Customizer.withDefaults())
-
-                // THÊM "Người Soát Vé" JWT vào đúng vị trí
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
+        .oauth2Login(oauth2 -> oauth2
+            .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService)))
+        .logout(logout -> logout
+            .logoutUrl("/logout")
+            .logoutSuccessUrl("/login?logout")
+            .invalidateHttpSession(true)
+            .clearAuthentication(true));
+    return http.build();
     }
 }

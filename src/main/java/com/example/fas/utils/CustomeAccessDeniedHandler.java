@@ -17,13 +17,15 @@ import java.io.IOException;
 public class CustomeAccessDeniedHandler implements AccessDeniedHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * This function handles access denied exceptions by sending a JSON response with error details.
-     * @param request
-     * @param response
-     * @param accessDeniedException
-     * @throws IOException
-     * @throws ServletException
+     *
+     * @param request               - The HttpServletRequest object that contains the request the client made to the servlet
+     * @param response              - The HttpServletResponse object that contains the response the servlet sends to the client
+     * @param accessDeniedException - The AccessDeniedException that was thrown
+     * @throws IOException      - If an input or output exception occurs
+     * @throws ServletException - If a servlet-specific exception occurs
      */
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
