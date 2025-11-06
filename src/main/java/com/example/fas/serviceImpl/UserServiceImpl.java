@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
-                           BCryptPasswordEncoder passwordEncoder) {
+            BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -142,7 +142,7 @@ public class UserServiceImpl implements UserService {
 
         if (!userUpdateRequest.getPassword().isEmpty() && userUpdateRequest.getPassword().length() >= 8
                 && userUpdateRequest.getPassword()
-                .matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
+                        .matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
             user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
         }
 
@@ -316,7 +316,7 @@ public class UserServiceImpl implements UserService {
      *
      * @param id - The ID of the user whose balance is to be retrieved.
      * @return BigDecimal - The balance of the user.
-     * Throws exceptions if the user ID is invalid or the user is not found.
+     *         Throws exceptions if the user ID is invalid or the user is not found.
      */
     @Override
     public BigDecimal getBalanceById(Long id) {
@@ -376,7 +376,7 @@ public class UserServiceImpl implements UserService {
      *
      * @param id - The ID of the user to retrieve.
      * @return User - The user entity.
-     * Throws exceptions if the user ID is invalid or the user is not found.
+     *         Throws exceptions if the user ID is invalid or the user is not found.
      */
     @Override
     public User getUserEntityById(Long id) {
