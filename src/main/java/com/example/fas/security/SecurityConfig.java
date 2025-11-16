@@ -31,20 +31,20 @@ import java.util.Collections;
 public class SecurityConfig {
 
     private static final String[] API_PUBLIC_ENDPOINTS = {
-        "/api/v1/auth/**",
-        "/v3/api-docs/**",
-        "/swagger-ui/**",
-        "/swagger-ui.html"
+            "/api/v1/auth/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
     };
 
     private static final String[] WEB_PUBLIC_ENDPOINTS = {
-        "/",
-        "/login",
-        "/oauth2/**",
-        "/error",
-        "/css/**",
-        "/js/**",
-        "/images/**"
+            "/",
+            "/login",
+            "/oauth2/**",
+            "/error",
+            "/css/**",
+            "/js/**",
+            "/images/**"
     };
 
     private final CustomsUserDetailsService userDetailsService;
@@ -55,25 +55,25 @@ public class SecurityConfig {
     private final OAuth2UserService<OAuth2UserRequest, OAuth2User> oAuth2UserService;
 
     public SecurityConfig(CustomsUserDetailsService userDetailsService,
-              PasswordEncoder passwordEncoder,
-              JwtAuthenticationFilter jwtAuthenticationFilter,
-              CustomeAccessDeniedHandler accessDeniedHandler,
-              CustomAuthenticationEntryPoint authenticationEntryPoint,
-              CustomOAuth2UserService oAuth2UserService) {
-    this.userDetailsService = userDetailsService;
-    this.passwordEncoder = passwordEncoder;
-    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    this.accessDeniedHandler = accessDeniedHandler;
-    this.authenticationEntryPoint = authenticationEntryPoint;
-    this.oAuth2UserService = oAuth2UserService;
+                          PasswordEncoder passwordEncoder,
+                          JwtAuthenticationFilter jwtAuthenticationFilter,
+                          CustomeAccessDeniedHandler accessDeniedHandler,
+                          CustomAuthenticationEntryPoint authenticationEntryPoint,
+                          CustomOAuth2UserService oAuth2UserService) {
+        this.userDetailsService = userDetailsService;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.accessDeniedHandler = accessDeniedHandler;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.oAuth2UserService = oAuth2UserService;
     }
 
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() {
-    DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-    provider.setUserDetailsService(userDetailsService);
-    provider.setPasswordEncoder(passwordEncoder);
-    return provider;
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return provider;
     }
 
     @Bean
@@ -84,42 +84,42 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
-    http.securityMatcher("/api/**")
-        .cors(cors -> cors.configurationSource(corsConfigurationSource))
-        .csrf(AbstractHttpConfigurer::disable)
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .exceptionHandling(exceptions -> exceptions
-            .authenticationEntryPoint(authenticationEntryPoint)
-            .accessDeniedHandler(accessDeniedHandler))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(API_PUBLIC_ENDPOINTS).permitAll()
-            .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
-            .anyRequest().authenticated())
-        .authenticationProvider(daoAuthenticationProvider())
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .formLogin(AbstractHttpConfigurer::disable)
-        .httpBasic(AbstractHttpConfigurer::disable)
-        .logout(AbstractHttpConfigurer::disable);
-    return http.build();
+        http.securityMatcher("/api/**")
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(API_PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
+                .authenticationProvider(daoAuthenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable);
+        return http.build();
     }
 
     @Bean
     @Order(2)
     public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
-    http.cors(cors -> cors.configurationSource(corsConfigurationSource))
-        .csrf(AbstractHttpConfigurer::disable)
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(WEB_PUBLIC_ENDPOINTS).permitAll()
-            .anyRequest().authenticated())
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(WEB_PUBLIC_ENDPOINTS).permitAll()
+                        .anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .formLogin(Customizer.withDefaults())
-        .oauth2Login(oauth2 -> oauth2
-            .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService)))
-        .logout(logout -> logout
-            .logoutUrl("/logout")
-            .logoutSuccessUrl("/login?logout")
-            .invalidateHttpSession(true)
-            .clearAuthentication(true));
-    return http.build();
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService)))
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true));
+        return http.build();
     }
 }

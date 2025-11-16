@@ -7,6 +7,8 @@ import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.dto.UserDto.UserUpdateRequest;
 import com.example.fas.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface UserService {
     // POST /users
@@ -26,7 +28,7 @@ public interface UserService {
     // GET /users/{id}
     UserResponseDto getUserById(Long id);
 
-    List<UserResponseDto> getAllUsers();
+    List<UserResponseDto> getAllUsers(Pageable pageable);
 
     UserResponseDto getUserByUsername(String username);
 

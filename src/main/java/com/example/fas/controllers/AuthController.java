@@ -3,6 +3,7 @@ package com.example.fas.controllers;
 import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.authDto.LoginResponseDto;
 import com.example.fas.dto.authDto.RefreshTokenRequestDto;
+import com.example.fas.exceptions.auth.RefreshTokenInvalidException;
 import com.example.fas.security.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -37,6 +38,11 @@ public class AuthController {
         this.jwtService = jwtService;
     }
 
+    /**
+     * Handles user registration.
+     * @param userDto The user registration data.
+     * @return A ResponseEntity containing an ApiResponse with the registration result.
+     * */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserRequestDto>> registerPage(@Valid @RequestBody UserRequestDto userDto) {
         userService.createUser(userDto);
@@ -44,6 +50,12 @@ public class AuthController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    /**
+     * This function handles user login by authenticating the provided credentials,
+     *        generating JWT tokens, and returning them in the response.
+     * @param loginDto The login request data containing username and password.
+     * @return A ResponseEntity containing an ApiResponse with a login success message and tokens.
+     * */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> loginPage(@Valid @RequestBody LoginRequestDto loginDto) {
         UsernamePasswordAuthenticationToken user = new UsernamePasswordAuthenticationToken(
@@ -57,6 +69,12 @@ public class AuthController {
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
+    /**
+     * Handles token refresh requests by validating the provided refresh token
+     *        and issuing new JWT tokens if valid.
+     * @param request The refresh token request data.
+     * @return A ResponseEntity containing an ApiResponse with new JWT tokens or an error message
+    * */
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<LoginResponseDto>> refreshToken(@Valid @RequestBody RefreshTokenRequestDto request) {
         String refreshToken = request.getRefreshToken();
@@ -85,7 +103,8 @@ public class AuthController {
             LoginResponseDto responseDto = buildLoginResponse(username, newAccessToken, newRefreshToken);
             ApiResponse<LoginResponseDto> apiResponse = ApiResponse.success("Token refreshed successfully", responseDto);
             return ResponseEntity.ok(apiResponse);
-        } catch (JwtException | IllegalArgumentException ex) {
+
+        } catch (JwtException | RefreshTokenInvalidException ex) {
             ApiResponse<LoginResponseDto> errorResponse = new ApiResponse<>(
                     HttpStatus.UNAUTHORIZED,
                     "Invalid refresh token",
@@ -95,15 +114,26 @@ public class AuthController {
         }
     }
 
+    /**
+     * Handles user logout requests.
+     * @return A ResponseEntity containing an ApiResponse with a logout success message.
+     * */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Object>> logoutPage(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Object>> logoutPage() {
         var apiResponse = ApiResponse.success("Logout successful.", null);
         return ResponseEntity.ok(apiResponse);
     }
 
+    /**
+     * Builds the login response DTO containing tokens and user information.
+     * @param username The username of the authenticated user.
+     * @param accessToken The generated access token.
+     * @param refreshToken The generated refresh token.
+     * @return A LoginResponseDto containing the tokens and user information.
+     * */
     private LoginResponseDto buildLoginResponse(String username, String accessToken, String refreshToken) {
         LoginResponseDto dto = new LoginResponseDto();
-        dto.setToken(accessToken);
+        dto.setAccessToken(accessToken);
         dto.setRefreshToken(refreshToken);
         dto.setAccessTokenExpiresIn(jwtService.getAccessTokenTtl());
         dto.setRefreshTokenExpiresIn(jwtService.getRefreshTokenTtl());

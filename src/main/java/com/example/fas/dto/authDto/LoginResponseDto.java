@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class LoginResponseDto {
-    private String token;
+    private String accessToken;
     private String refreshToken;
     private long accessTokenExpiresIn;
     private long refreshTokenExpiresIn;

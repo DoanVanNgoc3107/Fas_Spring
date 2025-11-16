@@ -29,9 +29,11 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -42,11 +44,12 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
-            BCryptPasswordEncoder passwordEncoder) {
+                           BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
     }
+
 
     @Override
     @Transactional
@@ -142,7 +145,7 @@ public class UserServiceImpl implements UserService {
 
         if (!userUpdateRequest.getPassword().isEmpty() && userUpdateRequest.getPassword().length() >= 8
                 && userUpdateRequest.getPassword()
-                        .matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
+                .matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
             user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
         }
 
@@ -220,6 +223,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDto getUserById(Long id) {
         return userMapper.toDto(getUserEntityById(id));
+    }
+
+    /**
+     * @brief This function retrieves a paginated list of all users.
+     * *
+     * @param pageable - The pagination information.
+     * @return Page<UserResponseDto> - A paginated list of user details.
+     */
+    @Override
+    public List<UserResponseDto> getAllUsers(Pageable pageable) {
+        Page<User> userPage = userRepository.findAll(pageable);
+        return userPage.map(userMapper::toDto).getContent();
     }
 
     @Override
@@ -312,11 +327,10 @@ public class UserServiceImpl implements UserService {
 
     /**
      * This function retrieves the balance of a user by their ID.
-     * *
      *
      * @param id - The ID of the user whose balance is to be retrieved.
      * @return BigDecimal - The balance of the user.
-     *         Throws exceptions if the user ID is invalid or the user is not found.
+     * Throws exceptions if the user ID is invalid or the user is not found.
      */
     @Override
     public BigDecimal getBalanceById(Long id) {
@@ -376,24 +390,13 @@ public class UserServiceImpl implements UserService {
      *
      * @param id - The ID of the user to retrieve.
      * @return User - The user entity.
-     *         Throws exceptions if the user ID is invalid or the user is not found.
+     * Throws exceptions if the user ID is invalid or the user is not found.
      */
     @Override
     public User getUserEntityById(Long id) {
         validateUserId(id);
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserIDNotFoundException("User with ID " + id + " not found"));
-    }
-
-    /*
-     * This function retrieves all users in the system.
-     *
-     * @return List<UserResponseDto> - A list of all users' details.
-     */
-    @Override
-    public List<UserResponseDto> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        return userMapper.toDtoList(users);
     }
 
     /*

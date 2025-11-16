@@ -1,6 +1,10 @@
 package com.example.fas.controllers;
 
 import com.example.fas.serviceImpl.UserServiceImpl;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.fas.dto.UserDto.UserRequestDto;
@@ -12,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static com.example.fas.model.ApiResponse.success;
 
@@ -25,11 +30,13 @@ public class UserController {
         this.userServiceImpl = userServiceImpl;
     }
 
-    /*
-     * Lấy info user bằng ID của user.
-     * @param Long id
+    /**
+     * Get information of user by ID
+     *
+     * @param id ID của user cần lấy thông tin
      * @return ResponseEntity
-     * */
+     *
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable Long id) {
         var response = new ApiResponse<>(
@@ -41,9 +48,13 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * Tạo users bằng tài khoản admin
-     * */
+    /**
+     * Tạo mới user
+     *
+     * @param userRequest - Thông tin user cần tạo
+     * @return ResponseEntity - Trả về user đã được tạo
+     *
+     */
     @PostMapping("/")
     public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserRequestDto userRequest) {
         UserResponseDto createdUser = userServiceImpl.createUser(userRequest);
@@ -51,49 +62,91 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /*
-     * */
+
+    /**
+     * Lấy tất cả user đã phân trang
+     *
+     * @param pageable - Phân trang
+     * @return ResponseEntity Trả về danh sách user đã phân trang
+     *
+     */
     @GetMapping("/")
-    public ResponseEntity<ApiResponse<List<UserResponseDto>>> getAllUsers() {
-        List<UserResponseDto> listUserDto = userServiceImpl.getAllUsers();
-        var response = new ApiResponse<List<UserResponseDto>>(HttpStatus.OK, "All users retrieved successfully", listUserDto, null);
+    public ResponseEntity<ApiResponse<List<UserResponseDto>>> getAllUsers(
+            @RequestParam("currents") Optional<String> currentOptional,
+            @RequestParam("sizes") Optional<String> sizeOptional,
+            Pageable pageable
+    ) {
+        int current_page = Integer.parseInt(currentOptional.orElse(""));
+        int size_page = Integer.parseInt(sizeOptional.orElse(""));
+
+        Pageable page = PageRequest.of(current_page - 1, size_page, Sort.by(Sort.Direction.ASC, "id"));
+
+        List<UserResponseDto> userPage = userServiceImpl.getAllUsers(page);
+        var response = new ApiResponse<>(
+                HttpStatus.OK,
+                "All users retrieved successfully",
+                userPage,
+                null
+        );
         return ResponseEntity.ok(response);
     }
 
-    /*
-     * */
+    /**
+     * This function updates user information based on the provided user update request.
+     *
+     * @param id The user update request containing updated user information.
+     * @return A ResponseEntity containing an ApiResponse with the updated user information.
+     */
     @PutMapping("/is-admin/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> isAdmin(@PathVariable Long id) {
-        var response = new ApiResponse<UserResponseDto>(HttpStatus.OK, "Set role ADMIN success.!", userServiceImpl.isAdmin(id), null);
+        var response = new ApiResponse<>(HttpStatus.OK, "Set role ADMIN success.!", userServiceImpl.isAdmin(id), null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /*
-     * */
+    /**
+     * This function updates user information based on the provided user update request.
+     *
+     * @param id The ID of the user to be updated.
+     * @return A ResponseEntity containing an ApiResponse with the updated user information.
+     */
     @PutMapping("/is-user/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> isUser(@PathVariable Long id) {
         var response = new ApiResponse<>(HttpStatus.OK, "Set role USER success.!", userServiceImpl.isUser(id), null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    /* Hàm khóa tài khoản user
-     * API */
+    /**
+     * Hàm cập nhật trạng thái banned cho user
+     * API
+     *
+     * @param id ID của user cần cập nhật
+     * @return ResponseEntity trả về user đã được cập nhật
+     *
+     */
     @PutMapping("/banned/{id}")
     public ResponseEntity<ApiResponse<Void>> banned(@PathVariable Long id) {
         userServiceImpl.banUser(id);
         return new ResponseEntity<>(success("Banned user success.!", null), HttpStatus.NO_CONTENT);
     }
 
-    /* Hàm khôi phục tài khoản user
-     * API
-     * */
+    /**
+     * Endpoint restore user having been soft-deleted
+     *
+     * @param id ID of the user to be restored
+     * @return ResponseEntity
+     *
+     */
     @PutMapping("/restore/{id}")
     public ResponseEntity<ApiResponse<Void>> restoreUser(@PathVariable Long id) {
         userServiceImpl.restoreUser(id);
         return new ResponseEntity<>(success("Restore user success.!", null), HttpStatus.NO_CONTENT);
     }
 
-    // Make identity and fullname endpoints explicit to avoid ambiguous path variables
+    /**
+     * @param identityCard The identity card number of the user to retrieve.
+     * @return A ResponseEntity containing an ApiResponse with the user information.
+     * @brief This function retrieves a user by their identity card number.
+     */
     @GetMapping("/identity/{identityCard}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserByIdentityCard(@PathVariable String identityCard) {
         var response = new ApiResponse<>(
