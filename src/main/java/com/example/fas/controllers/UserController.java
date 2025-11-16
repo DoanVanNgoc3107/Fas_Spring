@@ -1,7 +1,8 @@
 package com.example.fas.controllers;
 
-import com.example.fas.serviceImpl.UserServiceImpl;
-import org.springframework.data.domain.Page;
+import com.example.fas.security.JwtService;
+import com.example.fas.serviceImpl. UserServiceImpl;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -25,9 +26,11 @@ import static com.example.fas.model.ApiResponse.success;
 public class UserController {
 
     private final UserServiceImpl userServiceImpl;
+    private final JwtService jwtService;
 
-    public UserController(UserServiceImpl userServiceImpl) {
+    public UserController(UserServiceImpl userServiceImpl, JwtService jwtService) {
         this.userServiceImpl = userServiceImpl;
+        this.jwtService = jwtService;
     }
 
     /**
@@ -37,14 +40,13 @@ public class UserController {
      * @return ResponseEntity
      *
      */
-    @GetMapping("/{id}")
+    @PostMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable Long id) {
         var response = new ApiResponse<>(
                 HttpStatus.OK,
                 "User retrieved successfully",
                 userServiceImpl.getUserById(id),
-                null
-        );
+                null);
         return ResponseEntity.ok(response);
     }
 
@@ -58,10 +60,10 @@ public class UserController {
     @PostMapping("/")
     public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserRequestDto userRequest) {
         UserResponseDto createdUser = userServiceImpl.createUser(userRequest);
-        ApiResponse<UserResponseDto> response = new ApiResponse<>(HttpStatus.CREATED, "User created successfully", createdUser, null);
+        ApiResponse<UserResponseDto> response = new ApiResponse<>(HttpStatus.CREATED, "User created successfully",
+                createdUser, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
 
     /**
      * Lấy tất cả user đã phân trang
@@ -74,8 +76,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<List<UserResponseDto>>> getAllUsers(
             @RequestParam("currents") Optional<String> currentOptional,
             @RequestParam("sizes") Optional<String> sizeOptional,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         int current_page = Integer.parseInt(currentOptional.orElse(""));
         int size_page = Integer.parseInt(sizeOptional.orElse(""));
 
@@ -86,16 +87,19 @@ public class UserController {
                 HttpStatus.OK,
                 "All users retrieved successfully",
                 userPage,
-                null
-        );
+                null);
         return ResponseEntity.ok(response);
     }
 
+    
+
     /**
-     * This function updates user information based on the provided user update request.
+     * This function updates user information based on the provided user update
+     * request.
      *
      * @param id The user update request containing updated user information.
-     * @return A ResponseEntity containing an ApiResponse with the updated user information.
+     * @return A ResponseEntity containing an ApiResponse with the updated user
+     *         information.
      */
     @PutMapping("/is-admin/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> isAdmin(@PathVariable Long id) {
@@ -104,10 +108,12 @@ public class UserController {
     }
 
     /**
-     * This function updates user information based on the provided user update request.
+     * This function updates user information based on the provided user update
+     * request.
      *
      * @param id The ID of the user to be updated.
-     * @return A ResponseEntity containing an ApiResponse with the updated user information.
+     * @return A ResponseEntity containing an ApiResponse with the updated user
+     *         information.
      */
     @PutMapping("/is-user/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> isUser(@PathVariable Long id) {
@@ -153,8 +159,7 @@ public class UserController {
                 HttpStatus.OK,
                 "User retrieved successfully",
                 userServiceImpl.getUserByIdentityCard(identityCard),
-                null
-        );
+                null);
         return ResponseEntity.ok(response);
     }
 
@@ -164,9 +169,41 @@ public class UserController {
                 HttpStatus.OK,
                 "User retrieved successfully",
                 userServiceImpl.getUserByFullName(fullName),
-                null
-        );
+                null);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get current user information from JWT access token
+     * Frontend chỉ cần gửi token trong header: Authorization: Bearer {token}
+     * 
+     * @param authHeader The Authorization header containing Bearer token
+     * @return ResponseEntity containing current user information
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponseDto>> getCurrentUserFromToken(
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            // Extract token from "Bearer xxx" format
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header", null, null));
+            }
+            
+            String token = authHeader.substring(7);
+            
+            // Extract username from token
+            String username = jwtService.extractUsername(token);
+            
+            // Get fresh user data from database
+            UserResponseDto currentUser = userServiceImpl.getUserByUsername(username);
+            
+            var apiResponse = ApiResponse.success("Current user fetched successfully.", currentUser);
+            return ResponseEntity.ok(apiResponse);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Invalid or expired token", null, e.getMessage()));
+        }
     }
 
     // Disambiguate delete endpoints (delete by id vs delete by username)
@@ -191,7 +228,8 @@ public class UserController {
     }
 
     @PutMapping("/balance/update/{id}")
-    public ResponseEntity<ApiResponse<Void>> updateBalanceById(@PathVariable Long id, @RequestBody BigDecimal newBalance) {
+    public ResponseEntity<ApiResponse<Void>> updateBalanceById(@PathVariable Long id,
+            @RequestBody BigDecimal newBalance) {
         userServiceImpl.updateBalanceById(id, newBalance);
         return new ResponseEntity<>(success("Update balance success.!", null), HttpStatus.NO_CONTENT);
     }

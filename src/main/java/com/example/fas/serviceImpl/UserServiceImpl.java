@@ -6,6 +6,7 @@ import com.example.fas.dto.UserDto.UserUpdateRequest;
 import com.example.fas.enums.Role;
 import com.example.fas.enums.Social;
 import com.example.fas.enums.Status;
+import com.example.fas.exceptions.auth.AccessTokenInvalidException;
 import com.example.fas.exceptions.user.error.HadUserActiveException;
 import com.example.fas.exceptions.user.error.HadUserBannedException;
 import com.example.fas.exceptions.user.error.HadUserDeteleException;
@@ -24,12 +25,15 @@ import com.example.fas.mapper.UserMapper;
 import com.example.fas.model.User;
 import com.example.fas.repositories.UserRepository;
 import com.example.fas.services.UserService;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
+import java.net.Authenticator;
 import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -481,8 +485,12 @@ public class UserServiceImpl implements UserService {
         return userResponseDto;
     }
 
-    /*
-     * */
+    /**
+     * * This function retrieves a set of users by their status.
+     * *
+     * @param String status - The status of the users to retrieve.
+     * @return Set<UserResponseDto> - A set of user details.
+     */
     @Override
     public Set<UserResponseDto> getUsersByStatus(String status) {
         return userMapper.toDtoSet(userRepository.findByStatus(status));
@@ -493,6 +501,12 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDtoSet(userRepository.findByRole(role));
     }
 
+    /**
+     * * This function retrieves a set of users by their social provider.
+     * *
+     * @param String provider - The social provider of the users to retrieve.
+     * @return Set<UserResponseDto> - A set of user details.
+     */
     @Override
     public Set<UserResponseDto> getUsersBySocialProvider(String provider) {
         if (provider == null || provider.isEmpty()) {
@@ -504,5 +518,44 @@ public class UserServiceImpl implements UserService {
         } catch (IllegalArgumentException ex) {
             throw new UsernameInvalidException("Invalid social provider: " + provider);
         }
+    }
+
+    /**
+     * Retrieves the current authenticated user's information from database.
+     * This method extracts username from Spring Security Authentication context
+     * and fetches fresh user data from database.
+     *
+     * @param authentication The Spring Security authentication object containing user credentials
+     * @return UserResponseDto containing the current user's latest information from database
+     * @throws AccessTokenInvalidException if authentication is null or principal is not UserDetails
+     * @throws UsernameNotFoundException if user not found in database
+     */
+    @Override
+    public UserResponseDto getInfoUserCurrent(Authentication authentication) {
+        // Validate authentication object
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new AccessTokenInvalidException("Authentication is null or invalid");
+        }
+
+        // Extract username from authentication
+        // Spring Security stores UserDetails in principal, which has getUsername() method
+        String username;
+        Object principal = authentication.getPrincipal();
+        
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else if (principal instanceof String) {
+            username = (String) principal;
+        } else {
+            throw new AccessTokenInvalidException("Invalid principal type: " + principal.getClass().getName());
+        }
+
+        // Fetch fresh user data from database
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("User with username " + username + " not found");
+        }
+
+        return userMapper.toDto(user);
     }
 }

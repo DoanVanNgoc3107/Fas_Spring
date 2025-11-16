@@ -2,12 +2,11 @@ package com.example.fas.services;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
-
 import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.dto.UserDto.UserUpdateRequest;
 import com.example.fas.model.User;
-import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
 import org.springframework.data.domain.Pageable;
 
 public interface UserService {
@@ -49,6 +48,8 @@ public interface UserService {
     Set<UserResponseDto> getUsersByRole(String role);
 
     Set<UserResponseDto> getUsersBySocialProvider(String provider);
+
+    UserResponseDto getInfoUserCurrent(Authentication authentication);
 
     // DELETE /users/{id}
     void deleteUserById(Long id);
