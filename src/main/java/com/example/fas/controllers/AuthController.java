@@ -22,6 +22,7 @@ import com.example.fas.model.ApiResponse;
 import com.example.fas.services.UserService;
 
 import io.jsonwebtoken.JwtException;
+
 import java.util.Map;
 
 @RestController
@@ -40,9 +41,11 @@ public class AuthController {
 
     /**
      * Handles user registration.
+     *
      * @param userDto The user registration data.
      * @return A ResponseEntity containing an ApiResponse with the registration result.
-     * */
+     *
+     */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserRequestDto>> registerPage(@Valid @RequestBody UserRequestDto userDto) {
         userService.createUser(userDto);
@@ -52,29 +55,35 @@ public class AuthController {
 
     /**
      * This function handles user login by authenticating the provided credentials,
-     *        generating JWT tokens, and returning them in the response.
+     * generating JWT tokens, and returning them in the response.
+     *
      * @param loginDto The login request data containing username and password.
      * @return A ResponseEntity containing an ApiResponse with a login success message and tokens.
-     * */
+     *
+     */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> loginPage(@Valid @RequestBody LoginRequestDto loginDto) {
-        UsernamePasswordAuthenticationToken user = new UsernamePasswordAuthenticationToken(
-                loginDto.getUsername(), loginDto.getPassword());
+        // Hàm xác thực người dùng với username và password được cung cấp
+        UsernamePasswordAuthenticationToken user = new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword());
+
         var authentication = authenticationManager.authenticate(user);
         String username = authentication.getName();
         String accessToken = jwtService.generateAccessToken(username);
         String refreshToken = jwtService.generateRefreshToken(username);
         LoginResponseDto loginResponseDto = buildLoginResponse(username, accessToken, refreshToken);
+
         var apiResponse = ApiResponse.success("Login success", loginResponseDto);
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
     /**
      * Handles token refresh requests by validating the provided refresh token
-     *        and issuing new JWT tokens if valid.
+     * and issuing new JWT tokens if valid.
+     *
      * @param request The refresh token request data.
      * @return A ResponseEntity containing an ApiResponse with new JWT tokens or an error message
-    * */
+     *
+     */
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<LoginResponseDto>> refreshToken(@Valid @RequestBody RefreshTokenRequestDto request) {
         String refreshToken = request.getRefreshToken();
@@ -116,8 +125,10 @@ public class AuthController {
 
     /**
      * Handles user logout requests.
+     *
      * @return A ResponseEntity containing an ApiResponse with a logout success message.
-     * */
+     *
+     */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logoutPage() {
         var apiResponse = ApiResponse.success("Logout successful.", null);
@@ -126,11 +137,13 @@ public class AuthController {
 
     /**
      * Builds the login response DTO containing tokens and user information.
-     * @param username The username of the authenticated user.
-     * @param accessToken The generated access token.
+     *
+     * @param username     The username of the authenticated user.
+     * @param accessToken  The generated access token.
      * @param refreshToken The generated refresh token.
      * @return A LoginResponseDto containing the tokens and user information.
-     * */
+     *
+     */
     private LoginResponseDto buildLoginResponse(String username, String accessToken, String refreshToken) {
         LoginResponseDto dto = new LoginResponseDto();
         dto.setAccessToken(accessToken);

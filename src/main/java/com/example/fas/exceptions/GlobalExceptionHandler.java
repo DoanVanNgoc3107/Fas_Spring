@@ -18,6 +18,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -261,5 +262,24 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * @param ex      The exception thrown when method arguments are not valid.
+     * @param request The current web request.
+     * @return ResponseEntity<ErrorResponse> A response entity containing the error response and HTTP
+     * @brief Handle MethodArgumentNotValidException and return a structured error response.
+     */
+    @ExceptionHandler({
+            MethodArgumentNotValidException.class
+    })
+    public ResponseEntity<ErrorResponse> handlerMethodArgumentNotValidException(MethodArgumentNotValidException ex,
+                                                                             WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getClass().getSimpleName(),
+                "Username or password invalid",
+                request.getDescription(false));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

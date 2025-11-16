@@ -91,7 +91,7 @@ public class UserMapper {
                 .build();
     }
 
-    /*
+    /**
      * Convert a list of {@link User} entities to a list of {@link UserResponseDto}.
      *
      * <p>This method returns {@code null} when the input list is {@code null}.
@@ -110,8 +110,12 @@ public class UserMapper {
         return users.stream().map(this::toDto).toList();
     }
 
-    /*
-     * This */
+    /**
+     * Convert a list of {@link User} entities to a set of {@link UserResponseDto}.
+     * @param users the list of {@link User} entities to convert; may be {@code null}
+     * @return a set of populated {@link UserResponseDto} or {@code null} if {@code users} are {@code null}
+     *
+     */
     public Set<UserResponseDto> toDtoSet(List<User> users) {
         if (users == null) {
             return null;
