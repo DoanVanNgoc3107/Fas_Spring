@@ -32,6 +32,7 @@ public class SecurityConfig {
 
     private static final String[] API_PUBLIC_ENDPOINTS = {
             "/api/v1/auth/**",
+            "/api/v1/oauth2/**",  // OAuth2 redirect endpoints
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html"
@@ -40,6 +41,7 @@ public class SecurityConfig {
     private static final String[] WEB_PUBLIC_ENDPOINTS = {
             "/",
             "/login",
+            "/login/**",           // Include OAuth2 callback paths
             "/oauth2/**",
             "/error",
             "/css/**",
@@ -116,8 +118,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .formLogin(Customizer.withDefaults())
                 .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService)))
-                .logout(logout -> logout
+                .loginPage("/login")
+                .defaultSuccessUrl("/", true)
+                .failureUrl("/login?error")
+                .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService)))
+                        .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
                         .invalidateHttpSession(true)

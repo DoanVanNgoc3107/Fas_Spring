@@ -34,7 +34,7 @@ public class User {
     @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
     private String username;
 
-    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Column(nullable = true)
     private String password;
 
     @NotNull(message = "Status cannot be null")

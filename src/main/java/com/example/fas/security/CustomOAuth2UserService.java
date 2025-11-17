@@ -52,22 +52,24 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String username = oauth2UserInfo.getUsername();
 
         // 4. Logic "Tìm hoặc Tạo" (Find or Create)
-        // Hàm này của bạn gần như không cần thay đổi!
         User user = processOAuth2User(providerName, providerSpecificId, email, name, avatarUrl, username);
 
-        // 5. "ĐÓNG GÓI" VÀ TRẢ VỀ (giữ nguyên)
+        // 5. "ĐÓNG GÓI" VÀ TRẢ VỀ - CHỈ LƯU DATA CẦN THIẾT, KHÔNG LƯU ENTITY
+        // Tránh serialization issues với Spring Session
         Map<String, Object> customAttributes = Map.of(
-                "user", user,
-                "username", user.getUsername()
-        );
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "email", user.getEmail() != null ? user.getEmail() : "",
+                "name", user.getFullName() != null ? user.getFullName() : "",
+                "role", user.getRole().name(),
+                "provider", user.getProvider().name());
 
         String nameAttributeKey = "username";
 
         return new DefaultOAuth2User(
                 user.getRole().getAuthorities(),
                 customAttributes,
-                nameAttributeKey
-        );
+                nameAttributeKey);
     }
 
     /**
@@ -76,10 +78,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
      * Chúng ta chỉ thay đổi tên tham số một chút cho "chung chung" hơn.
      */
     private User processOAuth2User(String providerName,
-                                   String providerSpecificId,
-                                   String email, String name,
-                                   String avatarUrl,
-                                   String username) {
+            String providerSpecificId,
+            String email, String name,
+            String avatarUrl,
+            String username) {
 
         Social provider = Social.valueOf(providerName.toUpperCase());
 
@@ -114,10 +116,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 throw new AccountSocialExistsException("Email had login as : " + email);
             }
 
+            // Generate unique username nếu null hoặc quá dài
+            String uniqueUsername = generateUniqueUsername(username, email, providerSpecificId);
+
             // Tạo một User entity mới
             user = User.builder()
                     .fullName(name)
-                    .username(username)
+                    .username(uniqueUsername)
+                    .password(null) // OAuth2 users không có password
                     .provider(Social.valueOf(providerName.toUpperCase()))
                     .providerId(providerSpecificId)
                     .email(email)
@@ -129,5 +135,47 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             userRepository.save(user);
         }
         return user;
+    }
+
+    /**
+     * Generate unique username for OAuth2 users
+     * 
+     * @param username   Username from OAuth2 provider (có thể null)
+     * @param email      Email from OAuth2 provider
+     * @param providerId Provider ID as fallback
+     * @return Unique username (3-20 chars)
+     */
+    private String generateUniqueUsername(String username, String email, String providerId) {
+        // Nếu username null hoặc empty, tạo từ email
+        if (!StringUtils.hasText(username)) {
+            if (StringUtils.hasText(email)) {
+                username = email.split("@")[0];
+            } else {
+                // Fallback: dùng provider ID
+                username = "user_" + providerId;
+            }
+        }
+
+        // Trim về max 20 chars (vì validation yêu cầu max 20)
+        if (username.length() > 20) {
+            username = username.substring(0, 20);
+        }
+
+        // Ensure min 3 chars
+        if (username.length() < 3) {
+            username = username + "_" + providerId.substring(0, Math.min(3, providerId.length()));
+        }
+
+        // Check unique và add suffix nếu trùng
+        String baseUsername = username;
+        int counter = 1;
+        while (userRepository.existsByUsername(username)) {
+            // Tạo suffix, đảm bảo không vượt quá 20 chars
+            String suffix = "_" + counter;
+            int maxBaseLength = 20 - suffix.length();
+            username = baseUsername.substring(0, Math.min(baseUsername.length(), maxBaseLength)) + suffix;
+            counter++;
+        }
+        return username;
     }
 }

@@ -14,7 +14,7 @@ public class GoogleOAuth2UserInfo extends OAuth2UserInfo {
      */
     @Override
     public String getProviderId() {
-        return (String) attributes.get("id");
+        return (String) attributes.get("sub");
     }
 
     /**
@@ -35,13 +35,14 @@ public class GoogleOAuth2UserInfo extends OAuth2UserInfo {
         return (String) attributes.get("name");
     }
 
-    /**
-     * This function retrieves the username from the attribute map.
-     * @return The username as a String.
-     */
     @Override
     public String getUsername() {
-        return (String) attributes.get("login");
+        // Google không có username, dùng email prefix hoặc name
+        String email = (String) attributes.get("email");
+        if (email != null && email.contains("@")) {
+            return email.split("@")[0]; // Lấy phần trước @
+        }
+        return (String) attributes.get("name"); // Hoặc dùng name
     }
 
     /**
@@ -50,6 +51,6 @@ public class GoogleOAuth2UserInfo extends OAuth2UserInfo {
      */
     @Override
     public String getAvatarUrl() {
-        return (String) attributes.get("avatar_url");
+        return (String) attributes.get("picture");
     }
 }

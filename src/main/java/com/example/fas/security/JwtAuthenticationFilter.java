@@ -20,7 +20,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component // Đánh dấu là Bean ("viên gạch LEGO")
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter { // Kế thừa Filter chuẩn
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);

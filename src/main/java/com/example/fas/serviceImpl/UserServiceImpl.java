@@ -28,7 +28,6 @@ import com.example.fas.services.UserService;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
-import java.net.Authenticator;
 import java.util.List;
 import java.util.Set;
 
@@ -181,6 +180,11 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(userRepository.saveAndFlush(user));
     }
 
+    /**
+     * This function restore user having been soft-deleted
+     * @param Long id - The ID of the user to be restored.
+     * @return void
+     */
     @Override
     @Transactional
     public void restoreUser(Long id) {
@@ -194,6 +198,11 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    /**
+     * This function set role ADMIN for user
+     * @param Long id - The ID of the user to be set as admin.
+     * @return UserResponseDto
+     */
     @Override
     @Transactional
     public UserResponseDto isAdmin(Long id) {
@@ -250,6 +259,11 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(user);
     }
 
+    /**
+     * Retrieves a user by their identity card number.
+     * @param identityCard - The identity card number of the user to retrieve.
+     * @return UserResponseDto - The user details.
+     */
     @Override
     public UserResponseDto getUserByIdentityCard(String identityCard) {
         if (identityCard == null || identityCard.length() != 12 || !identityCard.matches("^\\d{12}$")) {
@@ -452,7 +466,7 @@ public class UserServiceImpl implements UserService {
         return userResponseDto;
     }
 
-    /*
+    /**
      * This function retrieves a user by their avatar URL.
      * *
      *
@@ -559,3 +573,4 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(user);
     }
 }
+

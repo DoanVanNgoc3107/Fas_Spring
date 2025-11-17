@@ -14,7 +14,8 @@ public class GithubOAuth2UserInfo extends OAuth2UserInfo {
      */
     @Override
     public String getProviderId() {
-        return (String) attributes.get("id");
+        Object id = attributes.get("id");
+        return id != null ? String.valueOf(id) : null;
     }
 
     /**
