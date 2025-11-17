@@ -111,28 +111,44 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             userRepository.save(user);
 
         } else {
-            // Xử lý trường hợp email bị trùng (logic này vẫn đúng)
-            if (StringUtils.hasText(email) && userRepository.findByEmail(email) != null) {
-                throw new AccountSocialExistsException("Email had login as : " + email);
+            // User not found by provider info, check for account linking by email
+            User existingUser = null;
+            if (StringUtils.hasText(email)) {
+                existingUser = userRepository.findByEmail(email);
             }
 
-            // Generate unique username nếu null hoặc quá dài
-            String uniqueUsername = generateUniqueUsername(username, email, providerSpecificId);
+            if (existingUser != null) {
+                // Account linking: an account with this email already exists.
+                // Link the new social provider to the existing account.
+                user = existingUser;
+                user.setProvider(provider);
+                user.setProviderId(providerSpecificId);
 
-            // Tạo một User entity mới
-            user = User.builder()
-                    .fullName(name)
-                    .username(uniqueUsername)
-                    .password(null) // OAuth2 users không có password
-                    .provider(Social.valueOf(providerName.toUpperCase()))
-                    .providerId(providerSpecificId)
-                    .email(email)
-                    .avatarUrl(avatarUrl)
-                    .role(Role.USER)
-                    .status(Status.ACTIVE)
-                    .balance(BigDecimal.ZERO)
-                    .build();
-            userRepository.save(user);
+                // Update name and avatar if they are different or missing
+                if (StringUtils.hasText(name) && !name.equals(user.getFullName())) {
+                    user.setFullName(name);
+                }
+                if (StringUtils.hasText(avatarUrl) && !avatarUrl.equals(user.getAvatarUrl())) {
+                    user.setAvatarUrl(avatarUrl);
+                }
+                userRepository.save(user);
+            } else {
+                // New user registration
+                String uniqueUsername = generateUniqueUsername(username, email, providerSpecificId);
+                user = User.builder()
+                        .fullName(name)
+                        .username(uniqueUsername)
+                        .password(null) // OAuth2 users do not have a password
+                        .provider(provider)
+                        .providerId(providerSpecificId)
+                        .email(email)
+                        .avatarUrl(avatarUrl)
+                        .role(Role.USER)
+                        .status(Status.ACTIVE)
+                        .balance(BigDecimal.ZERO)
+                        .build();
+                userRepository.save(user);
+            }
         }
         return user;
     }
