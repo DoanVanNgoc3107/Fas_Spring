@@ -5,8 +5,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+
 import java.security.Key;
 import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -58,9 +60,9 @@ public class JwtService {
         Date issuedAt = new Date(nowMillis);
         Date expiration = new Date(nowMillis + lifespanMillis);
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(issuedAt)
-                .setExpiration(expiration)
+                .subject(username)
+                .issuedAt(issuedAt)
+                .expiration(expiration)
                 .claim(TOKEN_TYPE_CLAIM, tokenType)
                 .signWith(this.signingKey)
                 .compact();
@@ -69,10 +71,10 @@ public class JwtService {
     private Claims parseClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(this.signingKey)
-                .setAllowedClockSkewSeconds(this.allowedClockSkewSeconds)
+                .clockSkewSeconds(this.allowedClockSkewSeconds)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public String extractUsername(String token) {

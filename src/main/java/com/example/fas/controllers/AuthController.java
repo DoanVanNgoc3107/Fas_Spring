@@ -83,10 +83,9 @@ public class AuthController {
     /**
      * Get current authenticated user information from JWT token.
      * Frontend chỉ cần gửi token trong Authorization header.
-     * 
      * Best Practice: Endpoint này nên ở AuthController vì liên quan đến authentication.
      * 
-     * @param authHeader Authorization header chứa Bearer token
+     * @param authentication Authorization header chứa Bearer token
      * @return ResponseEntity chứa thông tin user hiện tại
      */
     @GetMapping("/me")
