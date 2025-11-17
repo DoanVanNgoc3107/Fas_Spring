@@ -1,8 +1,8 @@
 package com.example.fas.security; // Gói của bạn
 
-import com.example.fas.enums.Role;
-import com.example.fas.enums.Social;
-import com.example.fas.enums.Status;
+import com.example.fas.enums.role.Role;
+import com.example.fas.enums.oauth2.AuthProvider;
+import com.example.fas.enums.user.UserStatus;
 import com.example.fas.exceptions.user.exists.AccountSocialExistsException;
 import com.example.fas.model.User;
 import com.example.fas.repositories.UserRepository;
@@ -83,7 +83,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             String avatarUrl,
             String username) {
 
-        Social provider = Social.valueOf(providerName.toUpperCase());
+        AuthProvider provider = AuthProvider.valueOf(providerName.toUpperCase());
 
         Optional<User> userOptional = userRepository.findByProviderAndProviderId(provider, providerSpecificId);
 
@@ -98,7 +98,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             if (StringUtils.hasText(avatarUrl) && !avatarUrl.equals(user.getAvatarUrl())) {
                 user.setAvatarUrl(avatarUrl);
             }
-            if (StringUtils.hasText(providerName) && user.getProvider().equals(Social.NONE)) {
+            if (StringUtils.hasText(providerName) && user.getProvider().equals(AuthProvider.NONE)) {
                 user.setProvider(provider);
             }
             if (StringUtils.hasText(providerSpecificId) && !providerSpecificId.equals(user.getProviderId())) {
@@ -124,12 +124,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .fullName(name)
                     .username(uniqueUsername)
                     .password(null) // OAuth2 users không có password
-                    .provider(Social.valueOf(providerName.toUpperCase()))
+                    .provider(AuthProvider.valueOf(providerName.toUpperCase()))
                     .providerId(providerSpecificId)
                     .email(email)
                     .avatarUrl(avatarUrl)
                     .role(Role.USER)
-                    .status(Status.ACTIVE)
+                    .userStatus(UserStatus.ACTIVE)
                     .balance(BigDecimal.ZERO)
                     .build();
             userRepository.save(user);

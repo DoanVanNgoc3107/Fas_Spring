@@ -1,6 +1,6 @@
 package com.example.fas.security;
 
-import com.example.fas.enums.Social;
+import com.example.fas.enums.oauth2.AuthProvider;
 import com.example.fas.exceptions.user.invalid.ProviderNotSupportException;
 
 import java.util.Map;
@@ -8,7 +8,7 @@ import java.util.Map;
 public class OAuth2UserInfoFactory {
     public static OAuth2UserInfo getOAuth2UserInfo(String registrationId, Map<String, Object> attributes) {
 
-        Social provider = Social.valueOf(registrationId.toUpperCase());
+        AuthProvider provider = AuthProvider.valueOf(registrationId.toUpperCase());
 
         return switch (provider) {
             case GITHUB -> new GithubOAuth2UserInfo(attributes);

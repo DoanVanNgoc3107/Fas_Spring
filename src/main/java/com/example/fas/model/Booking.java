@@ -21,7 +21,6 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "bookings")
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -34,6 +33,7 @@ public class Booking {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
+    // User who made the booking
     @ManyToOne(optional = false)
     @JoinColumn(name = "guest_id", nullable = false)
     private User guest;
@@ -49,7 +49,7 @@ public class Booking {
     private Instant startAt;
     private Instant endAt;
 
-    // Payment details
+    // PaymentStatus details
     private Instant paidAt;
     private Instant expireAt;
     

@@ -3,9 +3,9 @@ package com.example.fas.serviceImpl;
 import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.dto.UserDto.UserUpdateRequest;
-import com.example.fas.enums.Role;
-import com.example.fas.enums.Social;
-import com.example.fas.enums.Status;
+import com.example.fas.enums.oauth2.AuthProvider;
+import com.example.fas.enums.role.Role;
+import com.example.fas.enums.user.UserStatus;
 import com.example.fas.exceptions.auth.AccessTokenInvalidException;
 import com.example.fas.exceptions.user.error.HadUserActiveException;
 import com.example.fas.exceptions.user.error.HadUserBannedException;
@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
 
         User user = userMapper.toEntity(dto);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        user.setStatus(Status.ACTIVE);
+        user.setUserStatus(UserStatus.ACTIVE);
         user.setRole(Role.USER);
 
         return userMapper.toDto(userRepository.saveAndFlush(user));
@@ -189,12 +189,12 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void restoreUser(Long id) {
         User user = getUserEntityById(id);
-        if (user.getStatus() == Status.BANNED) {
+        if (user.getUserStatus() == UserStatus.BANNED) {
             throw new HadUserBannedException("User with ID " + id + " is not allowed to restore");
-        } else if (user.getStatus() == Status.ACTIVE) {
+        } else if (user.getUserStatus() == UserStatus.ACTIVE) {
             throw new HadUserActiveException("User with ID " + id + " is active");
         }
-        user.setStatus(Status.ACTIVE);
+        user.setUserStatus(UserStatus.ACTIVE);
         userRepository.save(user);
     }
 
@@ -207,7 +207,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDto isAdmin(Long id) {
         User user = getUserEntityById(id);
-        if (!user.getRole().name().equals("ADMIN") && user.getStatus().name().equals("ACTIVE")) {
+        if (!user.getRole().name().equals("ADMIN") && user.getUserStatus().name().equals("ACTIVE")) {
             user.setRole(Role.ADMIN);
         } else {
             throw new HadUserRoleAdminException("User with ID " + id + " is not allowed to be admin");
@@ -219,7 +219,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDto isUser(Long id) {
         User user = getUserEntityById(id);
-        if (!user.getRole().name().equals("USER") && user.getStatus().name().equals("ACTIVE")) {
+        if (!user.getRole().name().equals("USER") && user.getUserStatus().name().equals("ACTIVE")) {
             user.setRole(Role.USER);
         }
         return userMapper.toDto(userRepository.saveAndFlush(user));
@@ -228,8 +228,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void banUser(Long id) {
         User user = getUserEntityById(id);
-        if (!user.getStatus().name().equals("BANNED") && user.getStatus().name().equals("ACTIVE")) {
-            user.setStatus(Status.BANNED);
+        if (!user.getUserStatus().name().equals("BANNED") && user.getUserStatus().name().equals("ACTIVE")) {
+            user.setUserStatus(UserStatus.BANNED);
         }
     }
 
@@ -303,12 +303,12 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUserById(Long id) {
         User user = getUserEntityById(id);
-        if (user.getStatus() == Status.DELETED) {
+        if (user.getUserStatus() == UserStatus.DELETED) {
             throw new HadUserDeteleException("User with ID " + id + " is already deleted");
-        } else if (user.getStatus() == Status.BANNED) {
+        } else if (user.getUserStatus() == UserStatus.BANNED) {
             throw new HadUserDeteleException("User with ID " + id + " is banned, cannot delete");
         }
-        user.setStatus(Status.DELETED);
+        user.setUserStatus(UserStatus.DELETED);
         userRepository.save(user);
     }
 
@@ -319,12 +319,12 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new UsernameInvalidException("User with username " + username + " not found");
         }
-        if (user.getStatus() == Status.DELETED) {
+        if (user.getUserStatus() == UserStatus.DELETED) {
             throw new HadUserDeteleException("User with username " + username + " is already deleted");
-        } else if (user.getStatus() == Status.BANNED) {
+        } else if (user.getUserStatus() == UserStatus.BANNED) {
             throw new HadUserDeteleException("User with username " + username + " is banned, cannot delete");
         }
-        user.setStatus(Status.DELETED);
+        user.setUserStatus(UserStatus.DELETED);
         userRepository.save(user);
     }
 
@@ -334,12 +334,12 @@ public class UserServiceImpl implements UserService {
         validateUserByIdentityCard(identityCard);
         UserResponseDto userResponseDto = getUserByIdentityCard(identityCard);
         User user = getUserEntityById(userResponseDto.getId());
-        if (user.getStatus() == Status.DELETED) {
+        if (user.getUserStatus() == UserStatus.DELETED) {
             throw new HadUserDeteleException("User with identity card " + identityCard + " is already deleted");
-        } else if (user.getStatus() == Status.BANNED) {
+        } else if (user.getUserStatus() == UserStatus.BANNED) {
             throw new HadUserDeteleException("User with identity card " + identityCard + " is banned, cannot delete");
         }
-        user.setStatus(Status.DELETED);
+        user.setUserStatus(UserStatus.DELETED);
         userRepository.save(user);
     }
 
@@ -500,9 +500,9 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * * This function retrieves a set of users by their status.
+     * * This function retrieves a set of users by their userStatus.
      * *
-     * @param String status - The status of the users to retrieve.
+     * @param String userStatus - The userStatus of the users to retrieve.
      * @return Set<UserResponseDto> - A set of user details.
      */
     @Override
@@ -527,8 +527,8 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Provider cannot be null or empty");
         }
         try {
-            Social social = Social.valueOf(provider.toUpperCase());
-            return userMapper.toDtoSet(userRepository.findByProvider(social));
+            AuthProvider authProvider = AuthProvider.valueOf(provider.toUpperCase());
+            return userMapper.toDtoSet(userRepository.findByProvider(authProvider));
         } catch (IllegalArgumentException ex) {
             throw new UsernameInvalidException("Invalid social provider: " + provider);
         }

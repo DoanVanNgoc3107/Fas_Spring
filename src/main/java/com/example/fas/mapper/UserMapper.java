@@ -50,7 +50,7 @@ public class UserMapper {
                 .id(user.getId())
                 .fullName(user.getFullName())
                 .username(user.getUsername())
-                .status(user.getStatus() != null ? user.getStatus().name() : null)
+                .status(user.getUserStatus() != null ? user.getUserStatus().name() : null)
                 .role(user.getRole() != null ? user.getRole().name() : null)
                 .identityCard(user.getIdentityCard())
                 .avatarUrl(user.getAvatarUrl())
@@ -70,7 +70,7 @@ public class UserMapper {
      * <p>
      * Note: this mapping creates a new {@link User} instance and fills
      * only basic fields provided by the request DTO. Business defaults
-     * (e.g., role, status) or additional processing should be set in the service
+     * (e.g., role, userStatus) or additional processing should be set in the service
      * layer after mapping.
      * </p>
      *

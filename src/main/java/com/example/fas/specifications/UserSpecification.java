@@ -1,7 +1,7 @@
 package com.example.fas.specifications;
 
 import com.example.fas.model.User;
-import com.example.fas.enums.Status;
+import com.example.fas.enums.user.UserStatus;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils; // Helper của Spring, kiểm tra null/rỗng/khoảng trắng
 import jakarta.persistence.criteria.Predicate;
@@ -18,12 +18,12 @@ public class UserSpecification {
      * và "lắp ráp" chúng thành một Specification hoàn chỉnh.
      * * @param username (Tùy chọn) Tên đăng nhập để tìm kiếm (gần đúng - LIKE)
      * @param email (Tùy chọn) Email để tìm kiếm (gần đúng - LIKE)
-     * @param status (Tùy chọn) Trạng thái để tìm kiếm (chính xác - EQUAL)
+     * @param userStatus (Tùy chọn) Trạng thái để tìm kiếm (chính xác - EQUAL)
      * @return một Specification<User>
      */
     public static Specification<User> searchUsers(
             String username, String fullName,
-            String email, Status status,
+            String email, UserStatus userStatus,
             String identityCard, String phoneNumber,
             String role) {
 
@@ -51,10 +51,10 @@ public class UserSpecification {
                 predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
             }
 
-            // --- Điều kiện 3: Tìm theo 'status' ---
-            if (status != null) { // Enum chỉ cần kiểm tra null
-                // Thêm mệnh đề: AND status = 'STATUS' (tìm chính xác)
-                predicates.add(cb.equal(root.get("status"), status));
+            // --- Điều kiện 3: Tìm theo 'userStatus' ---
+            if (userStatus != null) { // Enum chỉ cần kiểm tra null
+                // Thêm mệnh đề: AND userStatus = 'STATUS' (tìm chính xác)
+                predicates.add(cb.equal(root.get("userStatus"), userStatus));
             }
 
             if (identityCard != null) {

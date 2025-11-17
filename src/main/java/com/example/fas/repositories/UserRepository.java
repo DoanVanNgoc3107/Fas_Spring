@@ -1,7 +1,7 @@
 package com.example.fas.repositories;
 
 import com.example.fas.model.User;
-import com.example.fas.enums.Social;
+import com.example.fas.enums.oauth2.AuthProvider;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,10 +39,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByRole(String role);
 
-    // Match the entity field name 'provider' (enum Social)
-    List<User> findByProvider(Social provider);
+    // Match the entity field name 'provider' (enum AuthProvider)
+    List<User> findByProvider(AuthProvider provider);
 
-    Optional<User> findByProviderAndProviderId(Social provider, String providerSpecificId);
+    Optional<User> findByProviderAndProviderId(AuthProvider provider, String providerSpecificId);
 
     // Query by username, identity card, phone number
     long count();

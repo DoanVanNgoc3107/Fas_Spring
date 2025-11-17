@@ -1,6 +1,9 @@
 package com.example.fas.model;
 
-import com.example.fas.enums.PaymentMethod;
+import com.example.fas.enums.payment.PaymentMethod;
+import com.example.fas.enums.payment.PaymentProvider;
+import com.example.fas.enums.payment.PaymentStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +17,6 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "payments")
-@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,21 +25,41 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Payment amount (VND)
     @NotNull(message = "Amount cannot be null")
     @DecimalMin(value = "0.0", inclusive = false, message = "Amount must be positive")
     private BigDecimal amount;
 
+    // Method of payment (e.g., CREDIT_CARD, DEBIT_CARD, etc.)
+    @NotNull(message = "Payment methods cannot be null")
     @Enumerated(EnumType.STRING)
-    @NotNull(message = "Payment method cannot be null")
     private PaymentMethod paymentMethod;
 
-    @NotNull(message = "Timestamp cannot be null")
-    private Instant timestamp;
+    // Payment provider (e.g., MOMO, VNPAY, etc.)
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "PaymentStatus provider cannot be null")
+    private PaymentProvider paymentProvider;
 
+    // Payment userStatus (e.g., SUCCESS, FAILED, PENDING)
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "PaymentStatus cannot be null")
+    private PaymentStatus paymentStatus;
+
+    // ID of the user who made the payment
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name= "user_id", nullable = false)
     private User user;
 
+    // One-to-one relationship with PaymentHistory
     @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, optional = false)
     private PaymentHistory paymentHistory;
+
+    @NotNull(message = "Payment date cannot be null")
+    @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
+    private Instant paymentDate;
+
+    @PrePersist
+    public void onCreat() {
+        this.paymentDate = Instant.now();
+    }
 }

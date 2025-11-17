@@ -1,25 +1,22 @@
 package com.example.fas.model;
 
+import com.example.fas.enums.user.UserStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
-import com.example.fas.enums.Status;
-import com.example.fas.enums.Role;
-import com.example.fas.enums.Social;
+import com.example.fas.enums.role.Role;
+import com.example.fas.enums.oauth2.AuthProvider;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "`users`")
-@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,12 +31,11 @@ public class User {
     @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
     private String username;
 
-    @Column(nullable = true)
     private String password;
 
-    @NotNull(message = "Status cannot be null")
+    @NotNull(message = "UserStatus cannot be null")
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private UserStatus userStatus;
 
     @Email(message = "Email should be valid")
     @Column(unique = true)
@@ -51,33 +47,57 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    @NotNull(message = "Social provider cannot be null")
-    private Social provider = Social.NONE;
+    @NotNull(message = "AuthProvider provider cannot be null")
+    private AuthProvider provider = AuthProvider.NONE;
 
     private String providerId;
 
     private String avatarUrl;
 
+    // User's account balance (VND)
+    @Column(precision = 20, scale = 0) // precision: tổng số chữ số, scale: số chữ số thập phân
     @Builder.Default
-    @NotNull(message = "Balance cannot be null")
-    @DecimalMin(value = "0.0", message = "Balance must be non-negative")
+    @NotNull(message = "Balance cannot be null (VND)")
+    @DecimalMin(value = "0", message = "Balance must be non-negative (VND)")
+    // fraction : ép phải là 0 (không có phần thập phân)
+    @Digits(integer = 20, fraction = 0, message = "Balance must be a valid monetary amount (VND)")
     private BigDecimal balance = BigDecimal.ZERO;
 
+    // Identity card number (exactly 12 digits)
     @Column(unique = true, length = 12)
-    @Pattern(regexp = "^\\d{12}$", message = "CCCD must be exactly 12 digits")
+    @Pattern(regexp = "^\\d{12}$", message = "Identity card must be exactly 12 digits")
     private String identityCard;
 
+    // Phone number (Vietnamese format)
+    @Column(unique = true)
     @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")
     private String phoneNumber;
 
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Room> rooms;
+    // One-to-many relationship with Rooms rented by the tenant
+    @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Room> rooms = new HashSet<>();
 
+    // One-to-one relationship with Landlord profile
+    @OneToOne
+    @JoinColumn(name = "landlord_id", unique = true)
+    private Landlord landlordProfile;
+
+    // Favorite landlord selected by the user
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "favorite_landlord_id", nullable = true)
+    private Landlord favoriteLandlord;
+
+    // Bookings made by the user
     @OneToMany(mappedBy = "guest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Booking> bookings;
+    private Set<Booking> bookings = new HashSet<>();
 
+    // Payment history records associated with the user
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<PaymentHistory> paymentHistories;
+    private Set<PaymentHistory> paymentHistories = new HashSet<>();
+
+    // Payments made by the user
+    @OneToMany(mappedBy= "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Payment> payments = new HashSet<>();
 
     @NotNull(message = "Creation timestamp cannot be null")
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
@@ -96,5 +116,22 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = Instant.now();
+    }
+
+    // Ghi đè phương thức equals để so sánh hai đối tượng User dựa trên id.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        User user = (User) o;
+
+        return Objects.equals(id, user.id);
+    }
+
+    // Ghi đè phương thức hashCode để trả về mã băm dựa trên id,
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
     }
 }
