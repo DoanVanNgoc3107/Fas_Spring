@@ -4,10 +4,10 @@ import com.example.fas.enums.payment.PaymentMethod;
 import com.example.fas.enums.payment.PaymentProvider;
 import com.example.fas.enums.payment.PaymentStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.NoArgsConstructor;
@@ -46,9 +46,14 @@ public class Payment {
     private PaymentStatus paymentStatus;
 
     // ID of the user who made the payment
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name= "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    // One-to-one relationship with Booking
+    @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, optional = false)
+    private Booking booking;
 
     // One-to-one relationship with PaymentHistory
     @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, optional = false)

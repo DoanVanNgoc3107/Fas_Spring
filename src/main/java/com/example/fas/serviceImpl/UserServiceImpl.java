@@ -181,8 +181,8 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * This function restore user having been soft-deleted
-     * @param Long id - The ID of the user to be restored.
+     * This function restores user having been soft-deleted
+     * @param id id - The ID of the user to be restored.
      * @return void
      */
     @Override
@@ -200,7 +200,7 @@ public class UserServiceImpl implements UserService {
 
     /**
      * This function set role ADMIN for user
-     * @param Long id - The ID of the user to be set as admin.
+     * @param id id - The ID of the user to be set as admin.
      * @return UserResponseDto
      */
     @Override
@@ -470,7 +470,7 @@ public class UserServiceImpl implements UserService {
      * This function retrieves a user by their avatar URL.
      * *
      *
-     * @param String avatarUrl - The avatar URL of the user to retrieve.
+     * @param avatarUrl avatarUrl - The avatar URL of the user to retrieve.
      *
      * @return UserResponseDto - The user details.
      * Throws exceptions if the avatar URL is invalid or the user is not found.
@@ -502,12 +502,12 @@ public class UserServiceImpl implements UserService {
     /**
      * * This function retrieves a set of users by their userStatus.
      * *
-     * @param String userStatus - The userStatus of the users to retrieve.
+     * @param status userStatus - The userStatus of the users to retrieve.
      * @return Set<UserResponseDto> - A set of user details.
      */
     @Override
     public Set<UserResponseDto> getUsersByStatus(String status) {
-        return userMapper.toDtoSet(userRepository.findByStatus(status));
+        return userMapper.toDtoSet(userRepository.findByUserStatus(UserStatus.valueOf(status.toUpperCase())));
     }
 
     @Override
@@ -518,7 +518,7 @@ public class UserServiceImpl implements UserService {
     /**
      * * This function retrieves a set of users by their social provider.
      * *
-     * @param String provider - The social provider of the users to retrieve.
+     * @param provider provider - The social provider of the users to retrieve.
      * @return Set<UserResponseDto> - A set of user details.
      */
     @Override

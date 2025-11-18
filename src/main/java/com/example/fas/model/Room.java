@@ -6,15 +6,16 @@ import java.util.List;
 
 import com.example.fas.enums.room.RoomStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "rooms")
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -25,12 +26,12 @@ public class Room {
 
     // Room name
     @NotBlank(message = "Room name cannot be blank")
-    @Column(nullable = false, unique = true, columnDefinition = "MEDIUMTEXT")
+    @Column(nullable = false, unique = true, columnDefinition = "TEXT")
     private String roomName;
 
     // Room description
     @NotBlank(message = "Room description cannot be blank")
-    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
     // Unique room code
@@ -41,14 +42,14 @@ public class Room {
 
     // Address of the room
     @NotBlank(message = "Address cannot be blank")
-    @Column(columnDefinition = "MEDIUMTEXT")
+    @Column(columnDefinition = "TEXT")
     private String address;
 
     // List of image URLs for the room
     @ElementCollection
-    @NotBlank(message = "Image URL cannot be blank")
-    @Column(nullable = false)
-    private List<String> imageURL;
+    @CollectionTable(name = "room_images", joinColumns = @JoinColumn(name = "room_id"))
+    @Column(name = "image_url", nullable = false)
+    private List<@NotBlank(message = "Image URL cannot be blank") String> imageURL;
 
     // Area of the room in square meters (m^2)
     @NotNull(message = "Area cannot be null")
@@ -73,12 +74,22 @@ public class Room {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "landlord_id", nullable = false)
     @NotNull(message = "Landlord cannot be null")
+    @ToString.Exclude
     private Landlord landlord;
 
     // Many-to-one relationship with User (tenant)
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
     private User tenant;
+
+    // One-to-many relationship with Bookings
+    @ToString.Exclude
+    @JsonIgnore
+    @Builder.Default
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private java.util.Set<Booking> bookings = new java.util.HashSet<>();
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC+7")
     private Instant createdAt;

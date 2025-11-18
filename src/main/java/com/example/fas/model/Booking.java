@@ -3,20 +3,14 @@ package com.example.fas.model;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import jakarta.persistence.Entity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.GenerationType;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -24,16 +18,24 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @JsonIgnore
     @ManyToOne(optional = false)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
+    @OneToOne(optional = false) // Each booking has one payment
+    @JoinColumn(name = "payment_id", nullable = false)
+    private Payment payment;
+
     // User who made the booking
+    @JsonIgnore
     @ManyToOne(optional = false)
     @JoinColumn(name = "guest_id", nullable = false)
     private User guest;
@@ -58,6 +60,16 @@ public class Booking {
 
     @PrePersist
     private void prePersist() {
+        // Validate dates
+        if (endAt != null && startAt != null && endAt.isBefore(startAt)) {
+            throw new IllegalArgumentException("Check-out date must be after check-in date");
+        }
+        // Auto-calculate total amount if not set
+        if (totalAmount == null && room != null && room.getPrice() != null && startAt != null && endAt != null) {
+            long days = java.time.Duration.between(startAt, endAt).toDays();
+            if (days == 0) days = 1; // Minimum 1 day
+            totalAmount = room.getPrice().multiply(BigDecimal.valueOf(days));
+        }
         Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;

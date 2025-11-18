@@ -2,6 +2,7 @@
   <configuration default="false" name="FasApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
     <option name="envFilePaths">
       <option value="$PROJECT_DIR$/.env" />
+      <option value="$PROJECT_DIR$/.env" />
     </option>
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
     <module name="FAS" />

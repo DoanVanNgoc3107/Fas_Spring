@@ -1,23 +1,24 @@
 package com.example.fas.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@Entity(name = "landlords")
+@Entity
+@Table(name = "landlords")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
 public class Landlord {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,12 +26,12 @@ public class Landlord {
 
     // Name of the landlord (họ và tên chủ nhà)
     @NotBlank(message = "Landlord name cannot be blank")
-    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String nameLandlord;
 
     // Description of the landlord (mô tả về chủ nhà)
     @NotBlank(message = "Landlord description cannot be blank")
-    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String descriptionLandlord;
 
     // Contact information of the landlord (thông tin liên hệ chủ nhà)
@@ -39,12 +40,17 @@ public class Landlord {
     private User user;
 
     // One-to-many relationship with Room entity
+    @ToString.Exclude
+    @JsonIgnore
+    @Builder.Default
     @OneToMany(mappedBy = "landlord", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Column(nullable = false)
     private Set<Room> rooms = new HashSet<>();
 
     // Danh sách ưa thích chủ nhà bởi người dùng
-    @OneToMany(mappedBy = "favorite_landlords", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonIgnore
+    @Builder.Default
+    @OneToMany(mappedBy = "favoriteLandlord", fetch = FetchType.LAZY)
     private Set<User> users = new HashSet<>();
 
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")

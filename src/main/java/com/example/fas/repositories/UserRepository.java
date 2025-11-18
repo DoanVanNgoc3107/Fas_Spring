@@ -2,6 +2,7 @@ package com.example.fas.repositories;
 
 import com.example.fas.model.User;
 import com.example.fas.enums.oauth2.AuthProvider;
+import com.example.fas.enums.user.UserStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +36,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     User findByProviderId(String providerId);
 
-    List<User> findByStatus(String status);
+    List<User> findByUserStatus(UserStatus userStatus);
 
     List<User> findByRole(String role);
 
