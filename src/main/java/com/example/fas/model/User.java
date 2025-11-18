@@ -121,6 +121,11 @@ public class User {
     @OneToMany(mappedBy= "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Payment> payments = new HashSet<>();
 
+    @ToString.Exclude // tránh vòng lặp vô hạn khi in đối tượng User
+    @JsonIgnore // tránh vòng lặp vô hạn khi serializing đối tượng User
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Appreciate> appreciates = new HashSet<>();
+
     // Timestamp of creation
     @NotNull(message = "Creation timestamp cannot be null")
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")

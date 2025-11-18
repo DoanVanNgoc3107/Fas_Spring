@@ -1,6 +1,7 @@
 package com.example.fas.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -44,6 +45,10 @@ public class Coupon {
     @DecimalMin(value = "0", message = "Max discount amount must be positive")
     private BigDecimal maxDiscountAmount;
 
+    @NotNull(message = "Start date cannot be null")
+    @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
+    private Instant startAt; // Ngày bắt đầu áp dụng coupon
+
     // Expiration date of the coupon
     @NotNull(message = "Expiration date cannot be null")
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
@@ -54,13 +59,29 @@ public class Coupon {
     private boolean isActive = true;
 
     @Min(value = 0)
+    @NotNull(message = "Quantity cannot be null")
     private Integer quantity;
+
+    // Many-to-one relationship with Booking entity
+    @ToString.Exclude
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn()
+    private Booking booking;
 
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private Instant createdAt;
 
+    private Instant updatedAt;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedAt = Instant.now();
     }
 }

@@ -3,6 +3,7 @@ package com.example.fas.model;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 import com.example.fas.enums.room.RoomStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -76,6 +77,12 @@ public class Room {
     @NotNull(message = "Landlord cannot be null")
     @ToString.Exclude
     private Landlord landlord;
+
+
+    @JsonIgnore
+    @ToString.Exclude
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Appreciate> appreciates;
 
     // Many-to-one relationship with User (tenant)
     @JsonIgnore
