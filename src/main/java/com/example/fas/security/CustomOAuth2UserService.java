@@ -1,12 +1,14 @@
 package com.example.fas.security; // Gói của bạn
 
-import com.example.fas.enums.role.Role;
 import com.example.fas.enums.oauth2.AuthProvider;
 import com.example.fas.enums.user.UserStatus;
 import com.example.fas.exceptions.user.exists.AccountSocialExistsException;
+import com.example.fas.model.Role;
 import com.example.fas.model.User;
+import com.example.fas.repositories.RoleRepository;
 import com.example.fas.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -23,16 +26,17 @@ import java.util.Optional;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
     @Autowired
-    public CustomOAuth2UserService(UserRepository userRepository) {
+    public CustomOAuth2UserService(UserRepository userRepository, RoleRepository roleRepository) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
-        // 1. Lấy "cục" dữ liệu thô (giữ nguyên)
+        // 1. Lấy thông tin người dùng từ nhà cung cấp OAuth2 (giữ nguyên)
         OAuth2User oAuth2User = super.loadUser(userRequest);
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
@@ -61,27 +65,25 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 "username", user.getUsername(),
                 "email", user.getEmail() != null ? user.getEmail() : "",
                 "name", user.getFullName() != null ? user.getFullName() : "",
-                "role", user.getRole().name(),
+                "role", user.getRole() != null ? user.getRole().getRoleName() : "",
                 "provider", user.getProvider().name());
 
         String nameAttributeKey = "username";
 
         return new DefaultOAuth2User(
-                user.getRole().getAuthorities(),
+                List.of(new SimpleGrantedAuthority(user.getRole() != null ? user.getRole().getRoleName() : "USER")),
                 customAttributes,
                 nameAttributeKey);
     }
 
     /**
      * Logic "Tìm hoặc Tạo" (Find or Create)
-     * HÀM NÀY GẦN NHƯ Y HỆT BẢN GỐC CỦA BẠN.
-     * Chúng ta chỉ thay đổi tên tham số một chút cho "chung chung" hơn.
      */
     private User processOAuth2User(String providerName,
-            String providerSpecificId,
-            String email, String name,
-            String avatarUrl,
-            String username) {
+                                   String providerSpecificId,
+                                   String email, String name,
+                                   String avatarUrl,
+                                   String username) {
 
         AuthProvider provider = AuthProvider.valueOf(providerName.toUpperCase());
 
@@ -119,6 +121,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             // Generate unique username nếu null hoặc quá dài
             String uniqueUsername = generateUniqueUsername(username, email, providerSpecificId);
 
+            // Lấy role mặc định từ DB (USER)
+            Role defaultRole = roleRepository.findByRoleName("USER").orElse(null);
+
             // Tạo một User entity mới
             user = User.builder()
                     .fullName(name)
@@ -128,7 +133,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .providerId(providerSpecificId)
                     .email(email)
                     .avatarUrl(avatarUrl)
-                    .role(Role.USER)
+                    .role(defaultRole)
                     .userStatus(UserStatus.ACTIVE)
                     .balance(BigDecimal.ZERO)
                     .build();
@@ -137,40 +142,26 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return user;
     }
 
-    /**
-     * Generate unique username for OAuth2 users
-     * 
-     * @param username   Username from OAuth2 provider (có thể null)
-     * @param email      Email from OAuth2 provider
-     * @param providerId Provider ID as fallback
-     * @return Unique username (3-20 chars)
-     */
     private String generateUniqueUsername(String username, String email, String providerId) {
-        // Nếu username null hoặc empty, tạo từ email
         if (!StringUtils.hasText(username)) {
             if (StringUtils.hasText(email)) {
                 username = email.split("@")[0];
             } else {
-                // Fallback: dùng provider ID
                 username = "user_" + providerId;
             }
         }
 
-        // Trim về max 20 chars (vì validation yêu cầu max 20)
         if (username.length() > 20) {
             username = username.substring(0, 20);
         }
 
-        // Ensure min 3 chars
         if (username.length() < 3) {
             username = username + "_" + providerId.substring(0, Math.min(3, providerId.length()));
         }
 
-        // Check unique và add suffix nếu trùng
         String baseUsername = username;
         int counter = 1;
         while (userRepository.existsByUsername(username)) {
-            // Tạo suffix, đảm bảo không vượt quá 20 chars
             String suffix = "_" + counter;
             int maxBaseLength = 20 - suffix.length();
             username = baseUsername.substring(0, Math.min(baseUsername.length(), maxBaseLength)) + suffix;

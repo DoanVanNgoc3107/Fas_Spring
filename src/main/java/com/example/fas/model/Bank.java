@@ -24,12 +24,13 @@ public class Bank {
 
     // the bank name of user
     @NotBlank(message = "Bank name cannot be blank")
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String bankName;
 
     // the bank account number of user
     @NotNull(message = "Bank number cannot be null")
     @Pattern(regexp = "^[0-9]{8,20}$", message = "Account number must be between 8 and 20 digits")
+    @Column(nullable = false)
     private String accountNumber;
 
     @NotBlank(message = "Owner bank account cannot be blank")
@@ -37,7 +38,8 @@ public class Bank {
 
     // the bank account holder name of user
     @JsonIgnore
-    @OneToOne(mappedBy = "bank")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     @ToString.Exclude
     private User user;
 

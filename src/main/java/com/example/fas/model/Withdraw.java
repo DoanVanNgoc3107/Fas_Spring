@@ -56,12 +56,12 @@ public class Withdraw {
     private WithdrawStatus withdrawStatus = WithdrawStatus.PENDING;
 
     // Người dùng thực hiện rút tiền
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC+7")
+    @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     @NotNull(message = "Withdraw status cannot be null")
     private Instant createdAt;
 
     // Thời gian cập nhật lần cuối
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC+7")
+    @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     @NotNull(message = "Updated at cannot be null")
     private Instant updatedAt;
 

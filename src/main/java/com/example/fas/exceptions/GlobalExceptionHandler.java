@@ -1,6 +1,7 @@
 package com.example.fas.exceptions;
 
 import com.example.fas.exceptions.auth.RefreshTokenInvalidException;
+import com.example.fas.exceptions.role.*;
 import com.example.fas.exceptions.user.error.HadUserActiveException;
 import com.example.fas.exceptions.user.error.HadUserBannedException;
 import com.example.fas.exceptions.user.error.HadUserDeteleException;
@@ -116,14 +117,24 @@ public class GlobalExceptionHandler {
      * @return ResponseEntity<ErrorResponse> A response entity containing the error response and HTTP
      * @brief Handle FieldExistsException and return a structured error response.
      */
-    @ExceptionHandler({UsernameExistsException.class, PhoneNumberExistsException.class,
-            IdentityCardExistsException.class, EmailExistsException.class})
+    @ExceptionHandler({
+            UsernameExistsException.class,
+            PhoneNumberExistsException.class,
+            IdentityCardExistsException.class,
+            EmailExistsException.class,
+            RoleNamExistsException.class
+    })
     public ResponseEntity<ErrorResponse> handlerFieldExistsException(RuntimeException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getClass().getSimpleName(),
                 ex.getMessage(), request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
+    /**
+     * @param request The current web request.
+     * @return ResponseEntity<ErrorResponse> A response entity containing the error response and HTTP
+     * @brief Handle SetFieldException and return a structured error response.
+     */
     @ExceptionHandler({HadUserActiveException.class, HadUserBannedException.class, HadUserDeteleException.class,
             HadUserRoleAdminException.class})
     public ResponseEntity<ErrorResponse> handlerSetFieldException(RuntimeException ex, WebRequest request) {
@@ -132,8 +143,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    @ExceptionHandler({UserIDNotFoundException.class, UsernameNotFoundException.class,
-            PhoneNumberNotFoundException.class, IdentityCardNotFoundException.class, EmailNotFoundException.class})
+    @ExceptionHandler({
+            UserIDNotFoundException.class,
+            UsernameNotFoundException.class,
+            PhoneNumberNotFoundException.class,
+            IdentityCardNotFoundException.class,
+            EmailNotFoundException.class,
+            RoleIdNotFoundException.class
+    })
     public ResponseEntity<ErrorResponse> handlerResourceNotFoundException(RuntimeException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getClass().getSimpleName(),
                 ex.getMessage(), request.getDescription(false));
@@ -144,9 +161,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
+    /**
+     * This method handles various field invalid exceptions and constructs a detailed error response.
+     * @param ex      The exception thrown when a field is invalid.
+     * @param request The current web request.
+     * @return ResponseEntity<ErrorResponse> A response entity containing the error response and HTTP
+     * @brief Handle FieldInvalidException and return a structured error response.
+     */
     @ExceptionHandler({UsernameInvalidException.class, PhoneNumberInvalidException.class,
             PasswordInvalidException.class, UserIDInvalidException.class, UserNotNullException.class,
-            IdentityCardInvalidException.class, EmailInvalidException.class})
+            IdentityCardInvalidException.class, EmailInvalidException.class,
+    RoleNameInvalidException.class, RoleInvalidException.class, RoleDescriptionInvalidException.class})
     public ResponseEntity<ErrorResponse> handlerFieldInvalidException(RuntimeException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getClass().getSimpleName(),
                 ex.getMessage(), request.getDescription(false));
@@ -274,7 +299,7 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException.class
     })
     public ResponseEntity<ErrorResponse> handlerMethodArgumentNotValidException(MethodArgumentNotValidException ex,
-                                                                             WebRequest request) {
+                                                                                WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getClass().getSimpleName(),

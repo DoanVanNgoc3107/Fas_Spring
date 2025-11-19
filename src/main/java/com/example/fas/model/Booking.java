@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit; // Dùng cái này để cộng thời gian
+import java.util.HashSet;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -25,30 +26,32 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Mối quan hệ với Room (thanh toán cho phòng nào)
     @JsonIgnore
     @ToString.Exclude
     @ManyToOne(optional = false)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
+    // Mối quan hệ với Payment (thông tin thanh toán)
     @ToString.Exclude
     @JsonIgnore
-    @OneToOne(optional = false)
-    @JoinColumn(name = "payment_id", nullable = false)
+    @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
     private Payment payment;
 
+    // User nào đã thực hiện booking
     @JsonIgnore
     @ToString.Exclude
     @ManyToOne(optional = false)
     @JoinColumn(name = "guest_id", nullable = false)
     private User guest;
 
-    @OneToMany(mappedBy = "booking",fetch =  FetchType.LAZY, cascade = CascadeType.ALL)
+
+    // Lịch sử sử dụng coupon cho booking này
+    @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     @ToString.Exclude
-    private Set<Coupon> coupons;
-
-    // --- 1. THÔNG TIN LƯU TRÚ (Dùng để tính tiền & Check lịch) ---
+    private Set<CouponHistory> couponHistories = new HashSet<>();
 
     @NotNull(message = "Start date cannot be null")
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
@@ -63,12 +66,13 @@ public class Booking {
     @DecimalMin(value = "0", inclusive = false, message = "Total amount must be positive")
     private BigDecimal totalAmount;
 
+    // Giá phòng tại thời điểm booking (snapshot)
     @NotNull(message = "Room price per day cannot be null")
-    private BigDecimal ratePerDay;
+    private BigDecimal ratePerDay; // Lưu giá phòng tại thời điểm booking
 
     // Thời điểm thanh toán thành công (có thể null nếu chưa trả)
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
-    private Instant paidAt;
+    private Instant paidAt; // Thời điểm thanh toán thành công
 
     // Hạn chót thanh toán (Booking sẽ bị hủy nếu quá giờ này mà chưa paidAt)
     // Ví dụ: Payment Window = 15 phút

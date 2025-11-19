@@ -27,7 +27,7 @@ public class Payment {
 
     // Payment amount (VND)
     @NotNull(message = "Amount cannot be null")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Amount must be positive")
+    @DecimalMin(value = "0", inclusive = false, message = "Amount must be positive")
     private BigDecimal amount;
 
     // Method of payment (e.g., CREDIT_CARD, DEBIT_CARD, etc.)
@@ -52,7 +52,8 @@ public class Payment {
     private User user;
 
     // One-to-one relationship with Booking
-    @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, optional = false)
+    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "booking_id", nullable = false, unique = true)
     private Booking booking;
 
     // One-to-one relationship with PaymentHistory

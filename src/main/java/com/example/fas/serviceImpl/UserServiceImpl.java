@@ -4,7 +4,6 @@ import com.example.fas.dto.UserDto.UserRequestDto;
 import com.example.fas.dto.UserDto.UserResponseDto;
 import com.example.fas.dto.UserDto.UserUpdateRequest;
 import com.example.fas.enums.oauth2.AuthProvider;
-import com.example.fas.enums.role.Role;
 import com.example.fas.enums.user.UserStatus;
 import com.example.fas.exceptions.auth.AccessTokenInvalidException;
 import com.example.fas.exceptions.user.error.HadUserActiveException;
@@ -22,7 +21,9 @@ import com.example.fas.exceptions.user.notFound.ProviderIdNotFoundException;
 import com.example.fas.exceptions.user.notFound.UserIDNotFoundException;
 import com.example.fas.exceptions.user.notFound.UsernameNotFoundException;
 import com.example.fas.mapper.UserMapper;
+import com.example.fas.model.Role;
 import com.example.fas.model.User;
+import com.example.fas.repositories.RoleRepository;
 import com.example.fas.repositories.UserRepository;
 import com.example.fas.services.UserService;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,9 +46,11 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final RoleRepository RoleRepository;
 
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper,
-                           BCryptPasswordEncoder passwordEncoder) {
+                           BCryptPasswordEncoder passwordEncoder, RoleRepository roleRepository) {
+        this.RoleRepository = roleRepository;
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -62,7 +65,7 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(dto);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setUserStatus(UserStatus.ACTIVE);
-        user.setRole(Role.USER);
+        user.setRole(roleRepository.findByRoleName("USER"));
 
         return userMapper.toDto(userRepository.saveAndFlush(user));
     }
@@ -181,15 +184,14 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * This function restores user having been soft-deleted
+     * This function restores a user having been soft-deleted
      * @param id id - The ID of the user to be restored.
-     * @return void
      */
     @Override
     @Transactional
     public void restoreUser(Long id) {
         User user = getUserEntityById(id);
-        if (user.getUserStatus() == UserStatus.BANNED) {
+        if (user.getUserStatus() == UserStatus.BANNED_PERMANENT) {
             throw new HadUserBannedException("User with ID " + id + " is not allowed to restore");
         } else if (user.getUserStatus() == UserStatus.ACTIVE) {
             throw new HadUserActiveException("User with ID " + id + " is active");
@@ -207,8 +209,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDto isAdmin(Long id) {
         User user = getUserEntityById(id);
-        if (!user.getRole().name().equals("ADMIN") && user.getUserStatus().name().equals("ACTIVE")) {
-            user.setRole(Role.ADMIN);
+        if (!user.getRole().getRoleName().equals("ADMIN") && user.getUserStatus().name().equals("ACTIVE")) {
+            user.setRole(RoleStatus.ADMIN);
         } else {
             throw new HadUserRoleAdminException("User with ID " + id + " is not allowed to be admin");
         }
@@ -219,8 +221,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDto isUser(Long id) {
         User user = getUserEntityById(id);
-        if (!user.getRole().name().equals("USER") && user.getUserStatus().name().equals("ACTIVE")) {
-            user.setRole(Role.USER);
+        if (!user.getRole().roleName().equals("USER") && user.getUserStatus().name().equals("ACTIVE")) {
+            user.setRole(RoleStatus.USER);
         }
         return userMapper.toDto(userRepository.saveAndFlush(user));
     }
@@ -229,7 +231,7 @@ public class UserServiceImpl implements UserService {
     public void banUser(Long id) {
         User user = getUserEntityById(id);
         if (!user.getUserStatus().name().equals("BANNED") && user.getUserStatus().name().equals("ACTIVE")) {
-            user.setUserStatus(UserStatus.BANNED);
+            user.setUserStatus(UserStatus.BANNED_PERMANENT);
         }
     }
 
@@ -305,7 +307,7 @@ public class UserServiceImpl implements UserService {
         User user = getUserEntityById(id);
         if (user.getUserStatus() == UserStatus.DELETED) {
             throw new HadUserDeteleException("User with ID " + id + " is already deleted");
-        } else if (user.getUserStatus() == UserStatus.BANNED) {
+        } else if (user.getUserStatus() == UserStatus.BANNED_PERMANENT) {
             throw new HadUserDeteleException("User with ID " + id + " is banned, cannot delete");
         }
         user.setUserStatus(UserStatus.DELETED);
@@ -321,7 +323,7 @@ public class UserServiceImpl implements UserService {
         }
         if (user.getUserStatus() == UserStatus.DELETED) {
             throw new HadUserDeteleException("User with username " + username + " is already deleted");
-        } else if (user.getUserStatus() == UserStatus.BANNED) {
+        } else if (user.getUserStatus() == UserStatus.BANNED_PERMANENT) {
             throw new HadUserDeteleException("User with username " + username + " is banned, cannot delete");
         }
         user.setUserStatus(UserStatus.DELETED);
@@ -336,7 +338,7 @@ public class UserServiceImpl implements UserService {
         User user = getUserEntityById(userResponseDto.getId());
         if (user.getUserStatus() == UserStatus.DELETED) {
             throw new HadUserDeteleException("User with identity card " + identityCard + " is already deleted");
-        } else if (user.getUserStatus() == UserStatus.BANNED) {
+        } else if (user.getUserStatus() == UserStatus.BANNED_PERMANENT) {
             throw new HadUserDeteleException("User with identity card " + identityCard + " is banned, cannot delete");
         }
         user.setUserStatus(UserStatus.DELETED);
@@ -535,14 +537,14 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * Retrieves the current authenticated user's information from database.
-     * This method extracts username from Spring Security Authentication context
-     * and fetches fresh user data from database.
+     * Retrieves the current authenticated user's information from a database.
+     * This method extracts username from the Spring Security Authentication context
+     * and fetches fresh user data from a database.
      *
      * @param authentication The Spring Security authentication object containing user credentials
-     * @return UserResponseDto containing the current user's latest information from database
+     * @return UserResponseDto containing the current user's latest information from a database
      * @throws AccessTokenInvalidException if authentication is null or principal is not UserDetails
-     * @throws UsernameNotFoundException if user not found in database
+     * @throws UsernameNotFoundException if a user isn't found in a database
      */
     @Override
     public UserResponseDto getInfoUserCurrent(Authentication authentication) {
@@ -552,7 +554,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // Extract username from authentication
-        // Spring Security stores UserDetails in principal, which has getUsername() method
+        // Spring Security stores UserDetails in principle, which has getUsername() method
         String username;
         Object principal = authentication.getPrincipal();
         

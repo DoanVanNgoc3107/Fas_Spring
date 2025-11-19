@@ -27,7 +27,7 @@ public class CustomsUserDetailsService implements UserDetailsService {
         if (user == null) throw new UsernameNotFoundException("User not found username : " + username);
 
         // Lấy role của user và gán cho GrantedAuthority < hệ thống phân quyền của Spring Security >
-        SimpleGrantedAuthority grantedAuthority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+        SimpleGrantedAuthority grantedAuthority = new SimpleGrantedAuthority("ROLE_" + user.getRole().getRoleName());
 
         // Lưu thông tin user và authorities vào UserDetails
         Collection<GrantedAuthority> authorities = List.of(grantedAuthority);

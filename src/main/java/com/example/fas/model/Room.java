@@ -2,6 +2,7 @@ package com.example.fas.model;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -41,10 +42,12 @@ public class Room {
     @Column(nullable = false, unique = true)
     private String roomCode;
 
-    // Address of the room
-    @NotBlank(message = "Address cannot be blank")
-    @Column(columnDefinition = "TEXT")
-    private String address;
+    // One-to-one relationship with Location
+    @ToString.Exclude
+    @NotNull(message = "Location cannot be null")
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "location_id", referencedColumnName = "id") // foreign key tên location_id trỏ đến bảng Location (id)
+    private Location address;
 
     // List of image URLs for the room
     @ElementCollection
@@ -54,7 +57,7 @@ public class Room {
 
     // Area of the room in square meters (m^2)
     @NotNull(message = "Area cannot be null")
-    @Pattern(regexp = "^[0-9]+$", message = "Area must be a valid number")
+    @Min(value = 1, message = "Area must be greater than 0")
     private Integer area;
 
     // Price of the room in the local currency (inclusive: bao gồm cả 0)
@@ -78,7 +81,7 @@ public class Room {
     @ToString.Exclude
     private Landlord landlord;
 
-
+    // Đánh giá của phòng
     @JsonIgnore
     @ToString.Exclude
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -91,17 +94,26 @@ public class Room {
     @ToString.Exclude
     private User tenant;
 
+    // Many-to-many relationship with BookingServices
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "room_booking_services", joinColumns = @JoinColumn(name = "room_id"), // tên cột khoá trỏ về Room
+            inverseJoinColumns = @JoinColumn(name = "booking_service_id") // tên cột khóa trỏ về bảng kia
+    )
+    @ToString.Exclude
+    @JsonIgnore
+    private Set<BookingService> bookingServices;
+
     // One-to-many relationship with Bookings
     @ToString.Exclude
     @JsonIgnore
     @Builder.Default
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.Set<Booking> bookings = new java.util.HashSet<>();
+    private Set<Booking> bookings = new HashSet<>();
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC+7")
+    @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private Instant createdAt;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC+7")
+    @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private Instant updatedAt;
 
     @PrePersist

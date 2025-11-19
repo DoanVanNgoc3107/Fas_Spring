@@ -1,5 +1,6 @@
 package com.example.fas.model;
 
+import com.example.fas.enums.CouponStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -8,6 +9,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "coupons")
@@ -45,33 +48,52 @@ public class Coupon {
     @DecimalMin(value = "0", message = "Max discount amount must be positive")
     private BigDecimal maxDiscountAmount;
 
+    // Ngày bắt đầu áp dụng coupon
     @NotNull(message = "Start date cannot be null")
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
-    private Instant startAt; // Ngày bắt đầu áp dụng coupon
+    private Instant startAt;
 
     // Expiration date of the coupon
     @NotNull(message = "Expiration date cannot be null")
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private Instant expireAt;
 
+    // Status of the coupon (active/inactive)
     @Builder.Default
     @Column(nullable = false)
-    private boolean isActive = true;
+    private CouponStatus status = CouponStatus.ACTIVE;
 
+    // Total quantity of coupons available
     @Min(value = 0)
     @NotNull(message = "Quantity cannot be null")
     private Integer quantity;
 
-    // Many-to-one relationship with Booking entity
+    // Number of times the coupon has been used
+    @Builder.Default
+    private Integer usedQuantity = 0;
+
+    // One-to-many relationship with CouponHistory entity
+    @OneToMany(mappedBy = "coupon", fetch = FetchType.LAZY)
     @ToString.Exclude
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn()
-    private Booking booking;
+    private Set<CouponHistory> couponHistories = new HashSet<>();
+
+
+    // Many-to-many relationship with Mail entity
+    @JsonIgnore
+    @ToString.Exclude
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "coupon_mails", // bảng liên kết giữa Coupon và Mail
+            joinColumns = @JoinColumn(name = "coupon_id"), // khóa ngoại tham chiếu đến Coupon
+            inverseJoinColumns = @JoinColumn(name = "mail_id") // khóa ngoại tham chiếu đến Mail
+    )
+    private Set<Mail> mails = new HashSet<>();
 
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private Instant createdAt;
 
+    @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private Instant updatedAt;
 
     @PrePersist

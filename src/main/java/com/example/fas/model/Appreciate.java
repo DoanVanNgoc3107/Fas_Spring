@@ -27,7 +27,7 @@ public class Appreciate {
     // Rating from 1 to 5
     @NotNull(message = "Rating cannot be null")
     @Min(value =0, message = "Rating must be at least 0")
-    @Max(value = 5, message = "Rating must be at most 5")
+    @Max(value = 10, message = "Rating must be at most 10")
     private Integer rating;
 
     @ManyToOne(fetch = FetchType.LAZY)

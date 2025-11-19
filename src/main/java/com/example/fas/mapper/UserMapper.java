@@ -51,7 +51,7 @@ public class UserMapper {
                 .fullName(user.getFullName())
                 .username(user.getUsername())
                 .status(user.getUserStatus() != null ? user.getUserStatus().name() : null)
-                .role(user.getRole() != null ? user.getRole().name() : null)
+                .role(user.getRole() != null ? user.getRole().getRoleName() : null)
                 .identityCard(user.getIdentityCard())
                 .avatarUrl(user.getAvatarUrl())
                 .email(user.getEmail())
