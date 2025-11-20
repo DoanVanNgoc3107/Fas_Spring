@@ -36,11 +36,12 @@ public class Appreciate {
     @ToString.Exclude
     private Room room;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    // Mỗi user chỉ được đánh giá 1 lần cho mỗi booking
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "booking_id", nullable = false, unique = true)
     @JsonIgnore
     @ToString.Exclude
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Booking booking;
 
     @JsonFormat(pattern = "dd/MM/yy/HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     @Column(nullable = false)

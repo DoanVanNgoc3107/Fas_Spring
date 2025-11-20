@@ -39,13 +39,18 @@ public class Booking {
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
     private Payment payment;
 
+    // Mối quan hệ với Appreciate (đánh giá sau khi sử dụng dịch vụ)
+    @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
+    @ToString.Exclude
+    @JsonIgnore
+    private Appreciate appreciate;
+
     // User nào đã thực hiện booking
     @JsonIgnore
     @ToString.Exclude
     @ManyToOne(optional = false)
     @JoinColumn(name = "guest_id", nullable = false)
     private User guest;
-
 
     // Lịch sử sử dụng coupon cho booking này
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -109,10 +114,16 @@ public class Booking {
     public void calculateTotalAmount() {
         if (this.startAt != null && this.endAt != null && this.room != null) {
             // Tính số ngày (làm tròn lên)
-            long days = Duration.between(startAt, endAt).toDays();
+            long days = Duration.between(startAt, endAt).toDays(); // Số ngày nguyên
+            long extraHours = Duration.between(startAt, endAt).toHoursPart(); // Phần giờ lẻ
 
-            // Logic bổ sung: Nếu ở chưa đến 24h nhưng qua đêm thì vẫn tính 1 ngày
-            if (days < 1) days = 1;
+            if (extraHours > 0) {
+                days += 1; // Làm tròn lên nếu có giờ lẻ
+            }
+
+            if (days == 0) {
+                days = 1; // Ít nhất 1 ngày
+            }
 
             // Lấy giá phòng từ entity Room (hoặc giá snapshot ratePerDay)
             BigDecimal price = this.ratePerDay != null ? this.ratePerDay : this.room.getPrice();

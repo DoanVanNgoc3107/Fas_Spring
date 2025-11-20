@@ -1,6 +1,6 @@
 package com.example.fas.model;
 
-import com.example.fas.enums.CouponStatus;
+import com.example.fas.model.enums.CouponStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

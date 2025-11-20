@@ -6,8 +6,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.example.fas.dto.UserDto.UserRequestDto;
-import com.example.fas.dto.UserDto.UserResponseDto;
+import com.example.fas.mapper.dto.UserDto.UserRequestDto;
+import com.example.fas.mapper.dto.UserDto.UserResponseDto;
 import com.example.fas.model.User;
 
 /**
@@ -28,7 +28,7 @@ import com.example.fas.model.User;
  * </p>
  */
 @Component
-public class UserMapper {
+public class UserMapper implements EntityMapper<UserResponseDto, User, UserRequestDto> {
 
     /**
      * Convert a {@link User} entity to {@link UserResponseDto}.
@@ -58,6 +58,7 @@ public class UserMapper {
                 .provider(user.getProvider() != null ? user.getProvider().name() : "NONE")
                 .providerId(user.getProviderId())
                 .balance(user.getBalance())
+                .coins(user.getCoins())
                 .phoneNumber(user.getPhoneNumber())
                 .createdAt(String.valueOf(user.getCreatedAt()))
                 .updatedAt(String.valueOf(user.getUpdatedAt()))

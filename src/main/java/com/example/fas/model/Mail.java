@@ -1,7 +1,7 @@
 package com.example.fas.model;
 
-import com.example.fas.enums.mail.MailStatus;
-import com.example.fas.enums.mail.MailType;
+import com.example.fas.model.enums.mail.MailStatus;
+import com.example.fas.model.enums.mail.MailType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

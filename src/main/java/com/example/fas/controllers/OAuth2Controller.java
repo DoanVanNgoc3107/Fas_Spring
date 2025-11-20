@@ -27,8 +27,8 @@ public class OAuth2Controller {
     public void initiateOAuth2Login(
             @PathVariable String provider,
             HttpServletResponse response) throws IOException {
-        
-        // Redirect to actual OAuth2 endpoint (without /api/v1 prefix)
+
+        // Redirect to the actual OAuth2 authorization endpoint
         response.sendRedirect("/oauth2/authorization/" + provider);
     }
 }

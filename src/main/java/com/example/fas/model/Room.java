@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.example.fas.enums.room.RoomStatus;
+import com.example.fas.model.enums.room.RoomStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -50,10 +50,10 @@ public class Room {
     private Location address;
 
     // List of image URLs for the room
-    @ElementCollection
-    @CollectionTable(name = "room_images", joinColumns = @JoinColumn(name = "room_id"))
-    @Column(name = "image_url", nullable = false)
-    private List<@NotBlank(message = "Image URL cannot be blank") String> imageURL;
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @JsonIgnore
+    private Set<ImageRoom> images;
 
     // Area of the room in square meters (m^2)
     @NotNull(message = "Area cannot be null")
@@ -90,7 +90,7 @@ public class Room {
     // Many-to-one relationship with User (tenant)
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     @ToString.Exclude
     private User tenant;
 

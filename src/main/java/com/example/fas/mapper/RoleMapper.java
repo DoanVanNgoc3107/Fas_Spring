@@ -1,8 +1,7 @@
 package com.example.fas.mapper;
 
-import com.example.fas.dto.role.RoleRequestDto;
-import com.example.fas.dto.role.RoleResponseDto;
-import com.example.fas.dto.role.RoleUpdateDto;
+import com.example.fas.mapper.dto.role.RoleRequestDto;
+import com.example.fas.mapper.dto.role.RoleResponseDto;
 import com.example.fas.model.Role;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class RoleMapper {
+public class RoleMapper implements EntityMapper<RoleResponseDto, Role, RoleRequestDto> {
 
     /**
      * Convert a {@link Role} entity to a {@link RoleResponseDto}.
@@ -62,7 +61,7 @@ public class RoleMapper {
      * @param roleList the list of {@link Role} entities to convert; may be {@code null}
      * @return a set of {@link RoleResponseDto}; never {@code null}
      */
-    public Set<RoleResponseDto> toSet(List<Role> roleList) {
+    public Set<RoleResponseDto> toDtoSet(List<Role> roleList) {
         return roleList.stream().map(this::toDto).collect(Collectors.toSet());
     }
 }

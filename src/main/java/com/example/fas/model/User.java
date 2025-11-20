@@ -1,7 +1,7 @@
 package com.example.fas.model;
 
-import com.example.fas.enums.oauth2.AuthProvider;
-import com.example.fas.enums.user.UserStatus;
+import com.example.fas.model.enums.oauth2.AuthProvider;
+import com.example.fas.model.enums.user.UserStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -48,6 +48,8 @@ public class User {
     private String email;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @JsonIgnore
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
@@ -60,12 +62,18 @@ public class User {
 
     private String avatarUrl;
 
-    // User's account balance (VND)
-    @Column(precision = 20, scale = 0) // precision: tổng số chữ số, scale: số chữ số thập phân
+    // User's account balance (VND) ví dụ : 1000000 VND
+    // Tiền Việt Nam — không có số thập phân
+    @Column(
+            name = "balance",
+            precision = 19,   // tối đa 19 chữ số
+            scale = 0,        // VND không có phần thập phân
+            nullable = false
+    )
+    @NotNull(message = "Balance cannot be null.")
+    @DecimalMin(value = "0", inclusive = true, message = "Balance must be >= 0 VND.")
+    @Digits(integer = 19, fraction = 0, message = "Balance must be a valid VND amount (no decimals).")
     @Builder.Default
-    @NotNull(message = "Balance cannot be null (VND)")
-    @DecimalMin(value = "0", message = "Balance must be non-negative (VND)")
-    @Digits(integer = 20, fraction = 0, message = "Balance must be a valid monetary amount (VND)")
     private BigDecimal balance = BigDecimal.ZERO;
 
     // Identity card number (exactly 12 digits)
@@ -141,12 +149,6 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Payment> payments = new HashSet<>();
-
-    // Appreciations (favorites) made by the user
-    @ToString.Exclude // tránh vòng lặp vô hạn khi in đối tượng User
-    @JsonIgnore // tránh vòng lặp vô hạn khi serializing đối tượng User
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Appreciate> appreciates = new HashSet<>();
 
     // Timestamp of creation
     @NotNull(message = "Creation timestamp cannot be null")

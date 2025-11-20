@@ -1,8 +1,8 @@
 package com.example.fas.model;
 
-import com.example.fas.enums.payment.PaymentMethod;
-import com.example.fas.enums.payment.PaymentProvider;
-import com.example.fas.enums.payment.PaymentStatus;
+import com.example.fas.model.enums.payment.PaymentMethod;
+import com.example.fas.model.enums.payment.PaymentProvider;
+import com.example.fas.model.enums.payment.PaymentStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.DecimalMin;

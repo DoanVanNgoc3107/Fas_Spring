@@ -1,12 +1,12 @@
 package com.example.fas.controllers;
 
-import com.example.fas.dto.UserDto.UserRequestDto;
-import com.example.fas.dto.UserDto.UserResponseDto;
-import com.example.fas.dto.authDto.LoginResponseDto;
-import com.example.fas.dto.authDto.RefreshTokenRequestDto;
-import com.example.fas.exceptions.auth.AccessTokenInvalidException;
-import com.example.fas.exceptions.auth.RefreshTokenInvalidException;
-import com.example.fas.security.JwtService;
+import com.example.fas.mapper.dto.UserDto.UserRequestDto;
+import com.example.fas.mapper.dto.UserDto.UserResponseDto;
+import com.example.fas.mapper.dto.authDto.LoginResponseDto;
+import com.example.fas.mapper.dto.authDto.RefreshTokenRequestDto;
+import com.example.fas.repositories.services.serviceImpl.exceptions.auth.AccessTokenInvalidException;
+import com.example.fas.repositories.services.serviceImpl.exceptions.auth.RefreshTokenInvalidException;
+import com.example.fas.config.security.JwtService;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,9 +23,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.fas.dto.authDto.LoginRequestDto;
+import com.example.fas.mapper.dto.authDto.LoginRequestDto;
 import com.example.fas.model.ApiResponse;
-import com.example.fas.services.UserService;
+import com.example.fas.repositories.services.UserService;
 
 import io.jsonwebtoken.JwtException;
 
@@ -75,6 +77,8 @@ public class AuthController {
         String accessToken = jwtService.generateAccessToken(username);
         String refreshToken = jwtService.generateRefreshToken(username);
         LoginResponseDto loginResponseDto = buildLoginResponse(username, accessToken, refreshToken);
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        securityContext.setAuthentication(authentication);
 
         var apiResponse = ApiResponse.success("Login success", loginResponseDto);
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);

@@ -1,6 +1,6 @@
 package com.example.fas.model;
 
-import com.example.fas.enums.withdraw.WithdrawStatus;
+import com.example.fas.model.enums.withdraw.WithdrawStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;

@@ -1,6 +1,6 @@
 package com.example.fas.utils;
 
-import com.example.fas.exceptions.GlobalExceptionHandler;
+import com.example.fas.repositories.services.serviceImpl.exceptions.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

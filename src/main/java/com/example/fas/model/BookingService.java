@@ -1,6 +1,6 @@
 package com.example.fas.model;
 
-import com.example.fas.enums.bookingService.TypeBookingService;
+import com.example.fas.model.enums.bookingService.TypeBookingService;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.util.Set;
 
 @Entity
-@Table(name = "standards")
+@Table(name = "booking_services")
 @Setter
 @Getter
 @AllArgsConstructor
@@ -26,6 +26,7 @@ public class BookingService {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Tên dịch vụ
     @NotBlank(message = "Name service cannot be blank")
     @Column(nullable = false, unique = true) // Tên dịch vụ không được để trống và phải là duy nhất
     private String nameService;
@@ -35,16 +36,19 @@ public class BookingService {
     @Column(nullable = false)
     private String description;
 
+    // Đơn vị tính (ví dụ: cái, giờ, kg, lít, v.v.)
     @NotBlank(message = "Unit cannot be blank")
     @Column(nullable = false) // Đơn vị tính không được để trống
     private String unit;
 
+    // Giá dịch vụ
     @NotNull(message = "Price cannot be null")
     @Column(nullable = false) // Giá không được để trống
     @DecimalMin(value = "0", message = "Price must be non-negative")
     @Digits(integer = 20, fraction = 0, message = "Balance must be a valid monetary amount (VND)")
     private BigDecimal price = BigDecimal.ZERO;
 
+    // Quan hệ nhiều-nhiều với Room thông qua bảng trung gian
     @ToString.Exclude
     @JsonIgnore
     @ManyToMany(mappedBy = "bookingServices", fetch = FetchType.LAZY)

@@ -1,15 +1,15 @@
 package com.example.fas.controllers;
 
-import com.example.fas.security.JwtService;
-import com.example.fas.serviceImpl. UserServiceImpl;
+import com.example.fas.config.security.JwtService;
+import com.example.fas.repositories.services.serviceImpl.UserServiceImpl;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.fas.dto.UserDto.UserRequestDto;
-import com.example.fas.dto.UserDto.UserResponseDto;
+import com.example.fas.mapper.dto.UserDto.UserRequestDto;
+import com.example.fas.mapper.dto.UserDto.UserResponseDto;
 import com.example.fas.model.ApiResponse;
 
 import org.springframework.http.HttpStatus;
@@ -40,7 +40,7 @@ public class UserController {
      * @return ResponseEntity
      *
      */
-    @PostMapping("/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable Long id) {
         var response = new ApiResponse<>(
                 HttpStatus.OK,
@@ -91,7 +91,6 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    
 
     /**
      * This function updates user information based on the provided user update
@@ -99,7 +98,7 @@ public class UserController {
      *
      * @param id The user update request containing updated user information.
      * @return A ResponseEntity containing an ApiResponse with the updated user
-     *         information.
+     * information.
      */
     @PutMapping("/is-admin/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> isAdmin(@PathVariable Long id) {
@@ -113,7 +112,7 @@ public class UserController {
      *
      * @param id The ID of the user to be updated.
      * @return A ResponseEntity containing an ApiResponse with the updated user
-     *         information.
+     * information.
      */
     @PutMapping("/is-user/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> isUser(@PathVariable Long id) {
@@ -129,9 +128,9 @@ public class UserController {
      * @return ResponseEntity trả về user đã được cập nhật
      *
      */
-    @PutMapping("/banned/{id}")
-    public ResponseEntity<ApiResponse<Void>> banned(@PathVariable Long id) {
-        userServiceImpl.banUser(id);
+    @PutMapping("/banned/{id}/{days}")
+    public ResponseEntity<ApiResponse<Void>> banned(@PathVariable Long id, @PathVariable Integer days) {
+        userServiceImpl.bannedUser(id, days);
         return new ResponseEntity<>(success("Banned user success.!", null), HttpStatus.NO_CONTENT);
     }
 
@@ -163,7 +162,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/fullname/{fullName}")
+    @GetMapping("/full-name/{fullName}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserByFullName(@PathVariable String fullName) {
         var response = new ApiResponse<>(
                 HttpStatus.OK,
@@ -176,7 +175,7 @@ public class UserController {
     /**
      * Get current user information from JWT access token
      * Frontend chỉ cần gửi token trong header: Authorization: Bearer {token}
-     * 
+     *
      * @param authHeader The Authorization header containing Bearer token
      * @return ResponseEntity containing current user information
      */
@@ -184,20 +183,20 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponseDto>> getCurrentUserFromToken(
             @RequestHeader("Authorization") String authHeader) {
         try {
-            // Extract token from "Bearer xxx" format
+            // Extract token from the "Bearer xxx" format
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header", null, null));
             }
-            
+
             String token = authHeader.substring(7);
-            
+
             // Extract username from token
             String username = jwtService.extractUsername(token);
-            
+
             // Get fresh user data from database
             UserResponseDto currentUser = userServiceImpl.getUserByUsername(username);
-            
+
             var apiResponse = ApiResponse.success("Current user fetched successfully.", currentUser);
             return ResponseEntity.ok(apiResponse);
         } catch (Exception e) {
@@ -229,7 +228,7 @@ public class UserController {
 
     @PutMapping("/balance/update/{id}")
     public ResponseEntity<ApiResponse<Void>> updateBalanceById(@PathVariable Long id,
-            @RequestBody BigDecimal newBalance) {
+                                                               @RequestBody BigDecimal newBalance) {
         userServiceImpl.updateBalanceById(id, newBalance);
         return new ResponseEntity<>(success("Update balance success.!", null), HttpStatus.NO_CONTENT);
     }
