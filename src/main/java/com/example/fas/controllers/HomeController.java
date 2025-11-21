@@ -14,7 +14,7 @@ public class HomeController {
         if (authentication != null && authentication.getPrincipal() instanceof OAuth2User oauth2User) {
             String name = oauth2User.getAttribute("name");
             String email = oauth2User.getAttribute("email");
-            return "Hello, " + name + " (" + email + ")! You have successfully logged in via OAuth2.";
+            return "/";
         }
         return "Hello, Guest! Please log in.";
     }

@@ -26,6 +26,10 @@ public interface UserService {
 
     void unbannedUser(Long id); // gỡ cấm user
 
+    void idPremiumUser(Long id); // nâng cấp tài khoản user thành premium
+
+    void removePremiumUser(Long id); // gỡ tài khoản premium về user thường
+
     // GET /users/{id}
     UserResponseDto getUserById(Long id);
 

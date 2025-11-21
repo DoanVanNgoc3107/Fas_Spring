@@ -55,6 +55,7 @@ public class UserMapper implements EntityMapper<UserResponseDto, User, UserReque
                 .identityCard(user.getIdentityCard())
                 .avatarUrl(user.getAvatarUrl())
                 .email(user.getEmail())
+                .isPremium(user.isPremium())
                 .provider(user.getProvider() != null ? user.getProvider().name() : "NONE")
                 .providerId(user.getProviderId())
                 .balance(user.getBalance())
@@ -99,8 +100,7 @@ public class UserMapper implements EntityMapper<UserResponseDto, User, UserReque
      * It only maps data fields and does not perform any business validation.</p>
      *
      * @param users the list of {@link User} entities to convert; may be {@code
-     * null}
-     *
+     *              null}
      * @return a list of populated {@link UserResponseDto} or {@code null} if {@code
      * users} are {@code null}
      */
@@ -113,6 +113,7 @@ public class UserMapper implements EntityMapper<UserResponseDto, User, UserReque
 
     /**
      * Convert a list of {@link User} entities to a set of {@link UserResponseDto}.
+     *
      * @param users the list of {@link User} entities to convert; may be {@code null}
      * @return a set of populated {@link UserResponseDto} or {@code null} if {@code users} are {@code null}
      *

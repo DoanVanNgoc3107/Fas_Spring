@@ -20,7 +20,6 @@ import com.example.fas.repositories.services.serviceImpl.exceptions.user.notFoun
 import com.example.fas.repositories.services.serviceImpl.exceptions.user.notFound.ProviderIdNotFoundException;
 import com.example.fas.repositories.services.serviceImpl.exceptions.user.notFound.UserIDNotFoundException;
 import com.example.fas.repositories.services.serviceImpl.exceptions.user.notFound.UsernameNotFoundException;
-import com.example.fas.mapper.RoleMapper;
 import com.example.fas.mapper.UserMapper;
 import com.example.fas.model.User;
 import com.example.fas.repositories.RoleRepository;
@@ -66,6 +65,7 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(dto);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setUserStatus(UserStatus.ACTIVE);
+        user.setPremium(false);
         user.setRole(roleRepository.findByRoleName("USER"));
 
         return userMapper.toDto(userRepository.saveAndFlush(user));
@@ -301,6 +301,40 @@ public class UserServiceImpl implements UserService {
             throw new HadUserActiveException("User with ID " + id + " is not banned");
         } else {
             throw new HadUserActiveException("User with ID " + id + " is not banned");
+        }
+    }
+
+    /**
+     * This function upgrades a user to premium status.
+     * @param id The ID of the user to be upgraded to premium.
+     */
+    @Override
+    @Transactional
+    public void idPremiumUser(Long id) {
+        validateUserId(id);
+        User user = getUserEntityById(id);
+        if (user.isPremium()) {
+            throw new IdentityCardExistsException("User with ID " + id + " is already premium");
+        } else {
+            user.setPremium(true);
+            userRepository.save(user);
+        }
+    }
+
+    /**
+     * This function removes premium status from a user.
+     * @param id The ID of the user to be downgraded from premium.
+     */
+    @Override
+    @Transactional
+    public void removePremiumUser(Long id) {
+        validateUserId(id);
+        User user = getUserEntityById(id);
+        if (!user.isPremium()) {
+            throw new IdentityCardExistsException("User with ID " + id + " is not premium");
+        } else {
+            user.setPremium(false);
+            userRepository.save(user);
         }
     }
 

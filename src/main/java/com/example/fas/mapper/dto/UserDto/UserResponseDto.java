@@ -15,9 +15,10 @@ public class UserResponseDto {
     private String email;
     private String avatarUrl;
     private String provider;
-    private Integer coins;
+    private int coins;
     private String providerId;
     private BigDecimal balance;
+    private boolean isPremium;
     private String status;
     private String role;
     private String identityCard;

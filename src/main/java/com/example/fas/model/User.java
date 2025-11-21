@@ -110,6 +110,12 @@ public class User {
     @ToString.Exclude
     private Landlord favoriteLandlord;
 
+    // Premium account status
+    @Column(nullable = false)
+    @NotNull(message = "isPremium cannot be null")
+    @Builder.Default
+    private boolean isPremium = false;
+
     // Bookings made by the user
     @ToString.Exclude
     @JsonIgnore
