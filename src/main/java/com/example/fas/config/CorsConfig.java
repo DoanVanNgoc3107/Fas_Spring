@@ -17,11 +17,11 @@ public class CorsConfig {
         
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000", // Local development
-                "https://your-production-domain.com" // Production domain
+                "https://your-production-domain.com", // Production domain
+                "http://localhost:63342"
         ));
 
-        // ✅ Cho phép HTTP methods - SỬA: dùng setAllowedMethods() thay vì
-        // addAllowedMethod()
+        // Cho phép ...
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
 

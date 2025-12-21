@@ -28,7 +28,7 @@ public class CustomeAccessDeniedHandler implements AccessDeniedHandler {
      * @throws ServletException - If a servlet-specific exception occurs
      */
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException {
         GlobalExceptionHandler.ErrorResponse errorResponse = new GlobalExceptionHandler.ErrorResponse(
                 HttpStatus.FORBIDDEN.value(),
                 accessDeniedException.getClass().getSimpleName(),

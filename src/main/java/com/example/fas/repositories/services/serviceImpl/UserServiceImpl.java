@@ -85,12 +85,15 @@ public class UserServiceImpl implements UserService {
         if (user.getPassword() == null || user.getPassword().isEmpty() || user.getPassword().length() < 8) {
             throw new PasswordInvalidException("Password must be at least 8 characters");
         }
+        // Validate password contains at least one uppercase letter, one lowercase letter, one digit, and one special character
         if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
             throw new PasswordInvalidException(
                     "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
         }
-        if (!user.getPhoneNumber().matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
-            throw new PhoneNumberInvalidException("Phone number is not valid in Vietnam");
+        // Thoát dấu chấm bằng \\. để đảm bảo an toàn trong Java String
+        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&\\.])[A-Za-z\\d@$!%*?&\\.]{8,}$")) {
+            throw new PasswordInvalidException(
+                    "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
         }
         if (user.getIdentityCard() == null || user.getIdentityCard().isEmpty()) {
             throw new PhoneNumberInvalidException("Identity card cannot be null or empty");
@@ -123,6 +126,10 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    /**
+     * @param id
+     *
+     */
     @Override
     public void validateUserId(Long id) {
         if (id == null || id <= 0) {

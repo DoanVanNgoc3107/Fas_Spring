@@ -38,15 +38,10 @@ public class UserController {
      *
      * @param id ID của user cần lấy thông tin
      * @return ResponseEntity
-     *
      */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable Long id) {
-        var response = new ApiResponse<>(
-                HttpStatus.OK,
-                "User retrieved successfully",
-                userServiceImpl.getUserById(id),
-                null);
+        var response = new ApiResponse<>(HttpStatus.OK, "User retrieved successfully", userServiceImpl.getUserById(id), null);
         return ResponseEntity.ok(response);
     }
 
@@ -55,13 +50,11 @@ public class UserController {
      *
      * @param userRequest - Thông tin user cần tạo
      * @return ResponseEntity - Trả về user đã được tạo
-     *
      */
     @PostMapping("/")
     public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserRequestDto userRequest) {
         UserResponseDto createdUser = userServiceImpl.createUser(userRequest);
-        ApiResponse<UserResponseDto> response = new ApiResponse<>(HttpStatus.CREATED, "User created successfully",
-                createdUser, null);
+        ApiResponse<UserResponseDto> response = new ApiResponse<>(HttpStatus.CREATED, "User created successfully", createdUser, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -70,24 +63,20 @@ public class UserController {
      *
      * @param pageable - Phân trang
      * @return ResponseEntity Trả về danh sách user đã phân trang
-     *
      */
     @GetMapping("/")
     public ResponseEntity<ApiResponse<List<UserResponseDto>>> getAllUsers(
             @RequestParam("currents") Optional<String> currentOptional,
             @RequestParam("sizes") Optional<String> sizeOptional,
             Pageable pageable) {
+
         int current_page = Integer.parseInt(currentOptional.orElse(""));
         int size_page = Integer.parseInt(sizeOptional.orElse(""));
 
         Pageable page = PageRequest.of(current_page - 1, size_page, Sort.by(Sort.Direction.ASC, "id"));
 
         List<UserResponseDto> userPage = userServiceImpl.getAllUsers(page);
-        var response = new ApiResponse<>(
-                HttpStatus.OK,
-                "All users retrieved successfully",
-                userPage,
-                null);
+        var response = new ApiResponse<>(HttpStatus.OK, "All users retrieved successfully", userPage, null);
         return ResponseEntity.ok(response);
     }
 
@@ -122,7 +111,6 @@ public class UserController {
 
     /**
      * Hàm cập nhật trạng thái banned cho user
-     * API
      *
      * @param id ID của user cần cập nhật
      * @return ResponseEntity trả về user đã được cập nhật
@@ -150,25 +138,23 @@ public class UserController {
     /**
      * @param identityCard The identity card number of the user to retrieve.
      * @return A ResponseEntity containing an ApiResponse with the user information.
-     * @brief This function retrieves a user by their identity card number.
+     * This function retrieves a user by their identity card number.
      */
     @GetMapping("/identity/{identityCard}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserByIdentityCard(@PathVariable String identityCard) {
-        var response = new ApiResponse<>(
-                HttpStatus.OK,
-                "User retrieved successfully",
-                userServiceImpl.getUserByIdentityCard(identityCard),
-                null);
+        var response = new ApiResponse<>(HttpStatus.OK, "User retrieved successfully", userServiceImpl.getUserByIdentityCard(identityCard), null);
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * This function retrieves a user by their full name.
+     *
+     * @param fullName The full name of the user to ret
+     * @return A ResponseEntity containing an ApiResponse with the user information.
+     */
     @GetMapping("/full-name/{fullName}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserByFullName(@PathVariable String fullName) {
-        var response = new ApiResponse<>(
-                HttpStatus.OK,
-                "User retrieved successfully",
-                userServiceImpl.getUserByFullName(fullName),
-                null);
+        var response = new ApiResponse<>(HttpStatus.OK, "User retrieved successfully", userServiceImpl.getUserByFullName(fullName), null);
         return ResponseEntity.ok(response);
     }
 
@@ -176,17 +162,14 @@ public class UserController {
      * Get current user information from JWT access token
      * Frontend chỉ cần gửi token trong header: Authorization: Bearer {token}
      *
-     * @param authHeader The Authorization header containing Bearer token
+     * @param authHeader The Authorization header containing the Bearer token
      * @return ResponseEntity containing current user information
      */
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserResponseDto>> getCurrentUserFromToken(
-            @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<ApiResponse<UserResponseDto>> getCurrentUserFromToken(@RequestHeader("Authorization") String authHeader) {
         try {
-            // Extract token from the "Bearer xxx" format
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header", null, null));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header", null, null));
             }
 
             String token = authHeader.substring(7);
@@ -194,14 +177,13 @@ public class UserController {
             // Extract username from token
             String username = jwtService.extractUsername(token);
 
-            // Get fresh user data from database
+            // Get fresh user data from a database
             UserResponseDto currentUser = userServiceImpl.getUserByUsername(username);
 
             var apiResponse = ApiResponse.success("Current user fetched successfully.", currentUser);
             return ResponseEntity.ok(apiResponse);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Invalid or expired token", null, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Invalid or expired token", null, e.getMessage()));
         }
     }
 
@@ -218,7 +200,6 @@ public class UserController {
         return new ResponseEntity<>(success("Delete user success.!", null), HttpStatus.NO_CONTENT);
     }
 
-    // LOGIC BALANCE
     @GetMapping("/balance/{id}")
     public ResponseEntity<ApiResponse<BigDecimal>> getBalanceById(@PathVariable Long id) {
         BigDecimal balance = userServiceImpl.getBalanceById(id);
@@ -227,8 +208,7 @@ public class UserController {
     }
 
     @PutMapping("/balance/update/{id}")
-    public ResponseEntity<ApiResponse<Void>> updateBalanceById(@PathVariable Long id,
-                                                               @RequestBody BigDecimal newBalance) {
+    public ResponseEntity<ApiResponse<Void>> updateBalanceById(@PathVariable Long id, @RequestBody BigDecimal newBalance) {
         userServiceImpl.updateBalanceById(id, newBalance);
         return new ResponseEntity<>(success("Update balance success.!", null), HttpStatus.NO_CONTENT);
     }

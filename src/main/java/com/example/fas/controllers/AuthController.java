@@ -11,11 +11,7 @@ import com.example.fas.config.security.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.fas.mapper.dto.authDto.LoginRequestDto;
 import com.example.fas.model.ApiResponse;
 import com.example.fas.repositories.services.UserService;
 
@@ -35,22 +30,18 @@ import java.util.Map;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final JwtService jwtService;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService) {
-        this.authenticationManager = authenticationManager;
+    public AuthController(JwtService jwtService, UserService userService) {
         this.userService = userService;
         this.jwtService = jwtService;
     }
 
     /**
-     * Handles user registration.
-     *
-     * @param userDto The user registration data.
-     * @return A ResponseEntity containing an ApiResponse with the registration result.
-     *
+     * Handles user registration by creating a new user with the provided information.
+     * <p>
+     * public ResponseEntity<ApiResponse<UserRequestDto>> register(@Valid @RequestBody UserRequestDto userDto) {taining an ApiResponse with a success message and the registered user data
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserRequestDto>> registerPage(@Valid @RequestBody UserRequestDto userDto) {
@@ -60,48 +51,18 @@ public class AuthController {
     }
 
     /**
-     * This function handles user login by authenticating the provided credentials,
-     * generating JWT tokens, and returning them in the response.
-     *
-     * @param loginDto The login request data containing username and password.
-     * @return A ResponseEntity containing an ApiResponse with a login success message and tokens.
-     *
-     */
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponseDto>> loginPage(@Valid @RequestBody LoginRequestDto loginDto) {
-        // Hàm xác thực người dùng với username và password được cung cấp
-        UsernamePasswordAuthenticationToken user = new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword());
-
-        var authentication = authenticationManager.authenticate(user);
-        String username = authentication.getName();
-        String accessToken = jwtService.generateAccessToken(username);
-        String refreshToken = jwtService.generateRefreshToken(username);
-        LoginResponseDto loginResponseDto = buildLoginResponse(username, accessToken, refreshToken);
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        securityContext.setAuthentication(authentication);
-
-        var apiResponse = ApiResponse.success("Login success", loginResponseDto);
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-    }
-
-    /**
-     * Get current authenticated user information from JWT token.
-     * Frontend chỉ cần gửi token trong Authorization header.
-     * Best Practice: Endpoint này nên ở AuthController vì liên quan đến authentication.
-     * 
-     * @param authentication Authorization header chứa Bearer token
-     * @return ResponseEntity chứa thông tin user hiện tại
+     * Hàm này xử lý login của người dùng bằng cách xác thực thông tin đăng nhập và tạo JWT token.
      */
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserResponseDto>> getInfoCurrentUser(Authentication authentication) throws AccessTokenInvalidException{
+    public ResponseEntity<ApiResponse<UserResponseDto>> getInfoCurrentUser(Authentication authentication) {
         try {
-        UserResponseDto currentUser = userService.getInfoUserCurrent(authentication);
-        var response = new ApiResponse<>(
-                HttpStatus.OK,
-                "Current user retrieved successfully",
-                currentUser,
-                null);
-        return ResponseEntity.ok(response);
+            UserResponseDto currentUser = userService.getInfoUserCurrent(authentication);
+            var response = new ApiResponse<>(
+                    HttpStatus.OK,
+                    "Current user retrieved successfully",
+                    currentUser,
+                    null);
+            return ResponseEntity.ok(response);
         } catch (AccessTokenInvalidException ex) {
             var errorResponse = new ApiResponse<UserResponseDto>(
                     HttpStatus.UNAUTHORIZED,
@@ -118,7 +79,6 @@ public class AuthController {
      *
      * @param request The refresh token request data.
      * @return A ResponseEntity containing an ApiResponse with new JWT tokens or an error message
-     *
      */
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<LoginResponseDto>> refreshToken(@Valid @RequestBody RefreshTokenRequestDto request) {
@@ -160,10 +120,8 @@ public class AuthController {
     }
 
     /**
-     * Handles user logout requests.
-     *
+     * Handles user logout requests
      * @return A ResponseEntity containing an ApiResponse with a logout success message.
-     *
      */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logoutPage() {
@@ -178,7 +136,6 @@ public class AuthController {
      * @param accessToken  The generated access token.
      * @param refreshToken The generated refresh token.
      * @return A LoginResponseDto containing the tokens and user information.
-     *
      */
     private LoginResponseDto buildLoginResponse(String username, String accessToken, String refreshToken) {
         LoginResponseDto dto = new LoginResponseDto();
