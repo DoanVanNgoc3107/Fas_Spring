@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  # Dịch vụ Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: homestay_db_suziji
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 31072005
+      POSTGRES_DB: homestay_suzuji
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Để dữ liệu không mất khi tắt Docker
+
+volumes:
+  postgres_data:

@@ -1,0 +1,128 @@
+package com.example.fas.controllers;
+
+import com.example.fas.mapper.dto.SensorDto.LatestSensorDataDto;
+import com.example.fas.mapper.dto.SensorDto.SensorDataRequestDto;
+import com.example.fas.mapper.dto.SensorDto.SensorDataResponseDto;
+import com.example.fas.mapper.dto.deviceDto.RegisterDevice;
+import com.example.fas.model.ApiResponse;
+import com.example.fas.model.enums.TypeSensor;
+import com.example.fas.repositories.services.serviceImpl.DeviceServiceImpl;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/devices")
+@RequiredArgsConstructor
+public class DeviceController {
+
+    private final DeviceServiceImpl deviceService;
+
+    /**
+     * Kiểm tra trạng thái kết nối của thiết bị
+     */
+    @PostMapping("/test-connection/{deviceCode}")
+    public ResponseEntity<ApiResponse<String>> testConnection(@Valid @PathVariable String deviceCode) {
+        return ResponseEntity.ok(ApiResponse.success("Kết nối thành công", null));
+    }
+
+    @PostMapping("/register/device/{id}")
+    public ResponseEntity<ApiResponse<String>> registerDevice(@Valid @RequestBody RegisterDevice request, @PathVariable Long id) {
+        deviceService.registerDevice(request);
+        return ResponseEntity.ok(ApiResponse.success("Đăng ký thiết bị thành công", null));
+    }
+    
+    // API nhận dữ liệu từ ESP32
+    // POST: http://localhost:8080/api/v1/devices/data
+    @PostMapping("/data")
+    public ResponseEntity<ApiResponse<String>> receiveData(@Valid @RequestBody SensorDataRequestDto request) {
+        deviceService.processSensorData(request);
+        return ResponseEntity.ok(ApiResponse.success("Dữ liệu đã được xử lý thành công", null));
+    }
+
+    // ==================== API cho NextJS ====================
+    
+    /**
+     * Lấy tất cả dữ liệu cảm biến của một thiết bị (có phân trang)
+     * GET: <a href="http://localhost:8080/api/v1/devices/">...</a>{deviceCode}/sensor-data?page=0&size=20
+     */
+    @GetMapping("/{deviceCode}/sensor-data")
+    public ResponseEntity<ApiResponse<Page<SensorDataResponseDto>>> getSensorDataByDevice(
+            @PathVariable String deviceCode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
+        Page<SensorDataResponseDto> data = deviceService.getSensorDataByDeviceCode(deviceCode, pageable);
+        
+        return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
+    }
+
+    /**
+     * Lấy dữ liệu cảm biến theo loại (MQ2 hoặc DHT22)
+     * GET: http://localhost:8080/api/v1/devices/{deviceCode}/sensor-data/{typeSensor}?page=0&size=20
+     */
+    @GetMapping("/{deviceCode}/sensor-data/{typeSensor}")
+    public ResponseEntity<ApiResponse<Page<SensorDataResponseDto>>> getSensorDataByType(
+            @PathVariable String deviceCode,
+            @PathVariable TypeSensor typeSensor,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
+        Page<SensorDataResponseDto> data = deviceService.getSensorDataByDeviceCodeAndType(
+                deviceCode, typeSensor, pageable);
+        
+        return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
+    }
+
+    /**
+     * Lấy dữ liệu mới nhất của thiết bị (cho dashboard real-time)
+     * GET: http://localhost:8080/api/v1/devices/{deviceCode}/latest
+     */
+    @GetMapping("/{deviceCode}/latest")
+    public ResponseEntity<ApiResponse<LatestSensorDataDto>> getLatestSensorData(
+            @PathVariable String deviceCode) {
+        
+        LatestSensorDataDto data = deviceService.getLatestSensorData(deviceCode);
+        return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
+    }
+
+    /**
+     * Lấy dữ liệu trong khoảng thời gian
+     * GET: http://localhost:8080/api/v1/devices/{deviceCode}/sensor-data/range?startTime=2024-01-01T00:00:00Z&endTime=2024-01-31T23:59:59Z
+     */
+    @GetMapping("/{deviceCode}/sensor-data/range")
+    public ResponseEntity<ApiResponse<List<SensorDataResponseDto>>> getSensorDataByTimeRange(
+            @PathVariable String deviceCode,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startTime,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endTime) {
+        
+        List<SensorDataResponseDto> data = deviceService.getSensorDataByTimeRange(
+                deviceCode, startTime, endTime);
+        
+        return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
+    }
+
+
+    /**
+     * Lấy dữ liệu cảm biến gần đây nhất (ví dụ: 10 bản ghi gần nhất)
+     * @param deviceCode Mã thiết bị
+     */
+    @GetMapping("/{deviceCode}/recent")
+    public ResponseEntity<ApiResponse<List<SensorDataResponseDto>>> getRecentSensorData(
+            @PathVariable String deviceCode) {
+        
+        List<SensorDataResponseDto> data = deviceService.getRecentSensorData(deviceCode);
+        return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
+    }
+}

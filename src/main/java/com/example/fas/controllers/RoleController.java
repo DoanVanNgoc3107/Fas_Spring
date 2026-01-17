@@ -1,8 +1,8 @@
 package com.example.fas.controllers;
 
-import com.example.fas.mapper.dto.role.RoleRequestDto;
-import com.example.fas.mapper.dto.role.RoleResponseDto;
-import com.example.fas.mapper.dto.role.RoleUpdateDto;
+import com.example.fas.mapper.dto.RoleDto.RoleRequestDto;
+import com.example.fas.mapper.dto.RoleDto.RoleResponseDto;
+import com.example.fas.mapper.dto.RoleDto.RoleUpdateDto;
 import com.example.fas.model.ApiResponse;
 import com.example.fas.repositories.services.serviceImpl.RoleServiceImp;
 import jakarta.validation.Valid;

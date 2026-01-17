@@ -1,4 +1,4 @@
-package com.example.fas.mapper.dto.role;
+package com.example.fas.mapper.dto.RoleDto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

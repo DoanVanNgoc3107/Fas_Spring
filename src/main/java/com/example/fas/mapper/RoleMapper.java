@@ -1,7 +1,7 @@
 package com.example.fas.mapper;
 
-import com.example.fas.mapper.dto.role.RoleRequestDto;
-import com.example.fas.mapper.dto.role.RoleResponseDto;
+import com.example.fas.mapper.dto.RoleDto.RoleRequestDto;
+import com.example.fas.mapper.dto.RoleDto.RoleResponseDto;
 import com.example.fas.model.Role;
 import org.springframework.stereotype.Component;
 

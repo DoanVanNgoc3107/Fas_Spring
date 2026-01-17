@@ -9,5 +9,5 @@ public class LoginResponseDto {
     private String refreshToken;
     private long accessTokenExpiresIn;
     private long refreshTokenExpiresIn;
-    private UserResponseDto userDto;
+    private UserResponseDto user;
 }

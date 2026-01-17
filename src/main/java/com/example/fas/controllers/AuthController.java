@@ -2,16 +2,23 @@ package com.example.fas.controllers;
 
 import com.example.fas.mapper.dto.UserDto.UserRequestDto;
 import com.example.fas.mapper.dto.UserDto.UserResponseDto;
+import com.example.fas.mapper.dto.authDto.LoginRequestDto;
 import com.example.fas.mapper.dto.authDto.LoginResponseDto;
 import com.example.fas.mapper.dto.authDto.RefreshTokenRequestDto;
 import com.example.fas.repositories.services.serviceImpl.exceptions.auth.AccessTokenInvalidException;
+import com.example.fas.repositories.services.serviceImpl.exceptions.auth.LoginFailedException;
 import com.example.fas.repositories.services.serviceImpl.exceptions.auth.RefreshTokenInvalidException;
 import com.example.fas.config.security.JwtService;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,16 +39,56 @@ public class AuthController {
 
     private final UserService userService;
     private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
 
-    public AuthController(JwtService jwtService, UserService userService) {
+    public AuthController(JwtService jwtService, UserService userService, AuthenticationManager authenticationManager) {
         this.userService = userService;
         this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
+        try {
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    loginRequestDto.getUsername(),
+                    loginRequestDto.getPassword()
+            );
+
+            // Authenticate using AuthenticationManager (which uses CustomsUserDetailsService + PasswordEncoder)
+            Authentication authentication = authenticationManager.authenticate(authToken);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String username = authentication.getName();
+            String accessToken = jwtService.generateAccessToken(username);
+            String refreshToken = jwtService.generateRefreshToken(username);
+            LoginResponseDto responseDto = buildLoginResponse(username, accessToken, refreshToken);
+            var response = new ApiResponse<>(
+                    HttpStatus.OK,
+                    "Login successful",
+                    responseDto,
+                    null);
+            return ResponseEntity.ok(response);
+        } catch (BadCredentialsException | LoginFailedException ex) {
+            var errorResponse = new ApiResponse<LoginResponseDto>(
+                    HttpStatus.UNAUTHORIZED,
+                    "Login failed",
+                    null,
+                    ex.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        } catch (AuthenticationException ex) {
+            var errorResponse = new ApiResponse<LoginResponseDto>(
+                    HttpStatus.UNAUTHORIZED,
+                    "Authentication failed",
+                    null,
+                    Map.of("reason", ex.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        }
     }
 
     /**
      * Handles user registration by creating a new user with the provided information.
      * <p>
-     * public ResponseEntity<ApiResponse<UserRequestDto>> register(@Valid @RequestBody UserRequestDto userDto) {taining an ApiResponse with a success message and the registered user data
+     * public ResponseEntity<ApiResponse<UserRequestDto>> register (@Valid @RequestBody UserRequestDto userDto) {taining an ApiResponse with a success message and the registered user data
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserRequestDto>> registerPage(@Valid @RequestBody UserRequestDto userDto) {
@@ -121,6 +168,7 @@ public class AuthController {
 
     /**
      * Handles user logout requests
+     *
      * @return A ResponseEntity containing an ApiResponse with a logout success message.
      */
     @PostMapping("/logout")
@@ -143,7 +191,8 @@ public class AuthController {
         dto.setRefreshToken(refreshToken);
         dto.setAccessTokenExpiresIn(jwtService.getAccessTokenTtl());
         dto.setRefreshTokenExpiresIn(jwtService.getRefreshTokenTtl());
-        dto.setUserDto(userService.getUserByUsername(username));
+        dto.setUser(userService.getUserByUsername(username));
         return dto;
     }
 }
+

@@ -16,8 +16,6 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -135,7 +133,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .avatarUrl(avatarUrl)
                     .role(defaultRole)
                     .userStatus(UserStatus.ACTIVE)
-                    .balance(BigDecimal.ZERO)
+//                    .balance(BigDecimal.ZERO)
                     .build();
             userRepository.save(user);
         }

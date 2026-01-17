@@ -9,7 +9,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
@@ -62,99 +61,10 @@ public class User {
 
     private String avatarUrl;
 
-    // User's account balance (VND) ví dụ : 1000000 VND
-    // Tiền Việt Nam — không có số thập phân
-    @Column(
-            name = "balance",
-            precision = 19,   // tối đa 19 chữ số
-            scale = 0,        // VND không có phần thập phân
-            nullable = false
-    )
-    @NotNull(message = "Balance cannot be null.")
-    @DecimalMin(value = "0", inclusive = true, message = "Balance must be >= 0 VND.")
-    @Digits(integer = 19, fraction = 0, message = "Balance must be a valid VND amount (no decimals).")
-    @Builder.Default
-    private BigDecimal balance = BigDecimal.ZERO;
-
-    // Identity card number (exactly 12 digits)
-    @Column(unique = true, length = 12)
-    @Pattern(regexp = "^\\d{12}$", message = "Identity card must be exactly 12 digits")
-    private String identityCard;
-
-    // Phone number (Vietnamese format)
-    @Column(unique = true)
-    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")
-    private String phoneNumber;
-
-    // Một đối một với thông tin ngân hàng của người dùng
-    // Khi xóa người dùng, thông tin ngân hàng cũng bị xóa (orphanRemoval = true)
-    @OneToOne(mappedBy = "user", orphanRemoval = true)
-    @ToString.Exclude // tránh vòng lặp vô hạn khi in đối tượng User
-    private Bank bank;
-
-    // One-to-many relationship with Rooms rented by the tenant
+    // Mỗi user có thể chứa nhiều thiết bị
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @ToString.Exclude
-    @JsonIgnore // tránh vòng lặp vô hạn khi serializing đối tượng User
-    @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Room> rooms = new HashSet<>();
-
-    // One-to-one relationship with Landlord profile
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    // khi xóa user thì xóa luôn landlordProfile
-    @ToString.Exclude
-    private Landlord landlordProfile;
-
-    // Favorite landlord selected by the user
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "favorite_landlord_id", nullable = true)
-    @ToString.Exclude
-    private Landlord favoriteLandlord;
-
-    // Premium account status
-    @Column(nullable = false)
-    @NotNull(message = "isPremium cannot be null")
-    @Builder.Default
-    private boolean isPremium = false;
-
-    // Bookings made by the user
-    @ToString.Exclude
-    @JsonIgnore
-    @OneToMany(mappedBy = "guest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Booking> bookings = new HashSet<>();
-
-    // Xu ảo của người dùng (tiền ảo trong hệ thống), 1x = 1vnd;
-    @Column(nullable = false)
-    @Builder.Default
-    @NotNull(message = "Coins cannot be null")
-    @Min(value = 0, message = "Coins must be non-negative")
-    private Integer coins = 0;
-
-    // Coupon history records associated with the user
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @ToString.Exclude
-    @JsonIgnore
-    private Set<CouponHistory> couponHistories = new HashSet<>();
-
-    // Mails associated with the user
-    @JsonIgnore
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "user_mails", // bảng liên kết giữa User và Mail
-                joinColumns = @JoinColumn(name = "user_id"), // khóa ngoại tham chiếu đến User
-                inverseJoinColumns = @JoinColumn(name = "mail_id")) // khóa ngoại tham chiếu đến Mail
-    @ToString.Exclude
-    private Set<Mail> mails = new HashSet<>();
-
-    // Payment history records associated with the user
-    @ToString.Exclude
-    @JsonIgnore
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<PaymentHistory> paymentHistories = new HashSet<>();
-
-    // Payments made by the user
-    @ToString.Exclude
-    @JsonIgnore
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Payment> payments = new HashSet<>();
+    private Set<Device> devices = new HashSet<>();
 
     // Timestamp of creation
     @NotNull(message = "Creation timestamp cannot be null")

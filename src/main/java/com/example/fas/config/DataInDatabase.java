@@ -1,6 +1,6 @@
 package com.example.fas.config;
 
-import com.example.fas.mapper.dto.role.RoleRequestDto;
+import com.example.fas.mapper.dto.RoleDto.RoleRequestDto;
 import com.example.fas.model.User;
 import com.example.fas.model.enums.user.UserStatus;
 import com.example.fas.repositories.RoleRepository;
@@ -36,12 +36,12 @@ public class DataInDatabase {
                         .fullName("DOAN VAN NGOC")
                         .username("admin")
                         .password(passwordEncoder.encode("31072005An.!"))
-                        .phoneNumber("0345515987")
+//                        .phoneNumber("0345515987")
                         .email("admin@gmail.com")
-                        .identityCard("012345678912")
-                        .isPremium(true)
-                        .balance(BigDecimal.valueOf(10000000))
-                        .coins(99999)
+//                        .identityCard("012345678912")
+//                        .isPremium(true)
+//                        .balance(BigDecimal.valueOf(10000000))
+//                        .coins(99999)
                         .userStatus(UserStatus.ACTIVE)
                         .role(roleRepository.findByRoleName("ADMIN"))
                         .build()
@@ -52,13 +52,13 @@ public class DataInDatabase {
                         .fullName("DOAN BINH AN")
                         .username("user")
                         .password(passwordEncoder.encode("31072005An.!"))
-                        .phoneNumber("0987654321")
+//                        .phoneNumber("0987654321")
                         .email("user@gmail.com")
-                        .isPremium(false)
-                        .identityCard("987654321012")
+//                        .isPremium(false)
+//                        .identityCard("987654321012")
                         .role(roleRepository.findByRoleName("USER"))
                         .userStatus(UserStatus.ACTIVE)
-                        .phoneNumber("0345515986")
+//                        .phoneNumber("0345515986")
                         .build());
             }
         };

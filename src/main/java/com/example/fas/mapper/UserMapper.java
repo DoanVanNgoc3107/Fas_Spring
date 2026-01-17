@@ -1,5 +1,6 @@
 package com.example.fas.mapper;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,17 +53,12 @@ public class UserMapper implements EntityMapper<UserResponseDto, User, UserReque
                 .username(user.getUsername())
                 .status(user.getUserStatus() != null ? user.getUserStatus().name() : null)
                 .role(user.getRole() != null ? user.getRole().getRoleName() : null)
-                .identityCard(user.getIdentityCard())
                 .avatarUrl(user.getAvatarUrl())
                 .email(user.getEmail())
-                .isPremium(user.isPremium())
                 .provider(user.getProvider() != null ? user.getProvider().name() : "NONE")
-                .providerId(user.getProviderId())
-                .balance(user.getBalance())
-                .coins(user.getCoins())
-                .phoneNumber(user.getPhoneNumber())
-                .createdAt(String.valueOf(user.getCreatedAt()))
-                .updatedAt(String.valueOf(user.getUpdatedAt()))
+                .createdAt(Instant.parse(String.valueOf(user.getCreatedAt())))
+                .updatedAt(Instant.parse(String.valueOf(user.getUpdatedAt())))
+                .deviceCodes(user.getDevices() != null ? user.getDevices().stream().map(device -> device.getDeviceCode()).collect(Collectors.toList()) : null)
                 .build();
     }
 
@@ -87,9 +83,7 @@ public class UserMapper implements EntityMapper<UserResponseDto, User, UserReque
         return User.builder()
                 .fullName(requestDto.getFirstName() + " " + requestDto.getLastName())
                 .username(requestDto.getUsername())
-                .identityCard(requestDto.getIdentityCard())
                 .email(requestDto.getEmail())
-                .phoneNumber(requestDto.getPhoneNumber())
                 .build();
     }
 

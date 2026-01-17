@@ -1,7 +1,8 @@
 package com.example.fas.repositories.services;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
+
+import com.example.fas.mapper.dto.UserDto.ChangePassword;
 import com.example.fas.mapper.dto.UserDto.UserRequestDto;
 import com.example.fas.mapper.dto.UserDto.UserResponseDto;
 import com.example.fas.mapper.dto.UserDto.UserUpdateRequest;
@@ -20,15 +21,17 @@ public interface UserService {
 
     UserResponseDto isAdmin(Long id);
 
+    UserResponseDto changePassword(ChangePassword changePassword);
+
     UserResponseDto isUser(Long id);
 
     void bannedUser(Long id, int ban_days); // Cấm user theo ngày (1 _ 3 _ 7 _ 30)
 
     void unbannedUser(Long id); // gỡ cấm user
 
-    void idPremiumUser(Long id); // nâng cấp tài khoản user thành premium
+//    void idPremiumUser(Long id); // nâng cấp tài khoản user thành premium
 
-    void removePremiumUser(Long id); // gỡ tài khoản premium về user thường
+//    void removePremiumUser(Long id); // gỡ tài khoản premium về user thường
 
     // GET /users/{id}
     UserResponseDto getUserById(Long id);
@@ -37,9 +40,9 @@ public interface UserService {
 
     UserResponseDto getUserByUsername(String username);
 
-    UserResponseDto getUserByIdentityCard(String identityCard);
+//    UserResponseDto getUserByIdentityCard(String identityCard);
 
-    UserResponseDto getUserByPhoneNumber(String phoneNumber);
+//    UserResponseDto getUserByPhoneNumber(String phoneNumber);
 
     UserResponseDto  getUserByFullName(String fullName);
 
@@ -60,16 +63,16 @@ public interface UserService {
 
     void deleteUserByUsername(String username);
     
-    void deleteUserByIdentityCard(String identityCard);
+//    void deleteUserByIdentityCard(String identityCard);
 
     // ==== Balance ====
-    BigDecimal getBalanceById(Long id);
+//    BigDecimal getBalanceById(Long id);
 
-    void updateBalanceById(Long id, BigDecimal newBalance);
+//    void updateBalanceById(Long id, BigDecimal newBalance);
 
-    void increaseBalance(Long id, BigDecimal amount);
+//    void increaseBalance(Long id, BigDecimal amount);
 
-    void decreaseBalance(Long id, BigDecimal amount);
+//    void decreaseBalance(Long id, BigDecimal amount);
 
 
     // === Hàm tiện ích để validate dữ liệu người dùng ====
@@ -77,9 +80,9 @@ public interface UserService {
 
     void validateUserId(Long id);
 
-    void validateAmount(BigDecimal amount);
+//    void validateAmount(BigDecimal amount);
 
-    void validateUserByIdentityCard(String identityCard);
+//    void validateUserByIdentityCard(String identityCard);
 
     User getUserEntityById(Long id);
 }

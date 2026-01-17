@@ -1,5 +1,6 @@
 package com.example.fas.repositories.services.serviceImpl;
 
+import com.example.fas.mapper.dto.UserDto.ChangePassword;
 import com.example.fas.mapper.dto.UserDto.UserRequestDto;
 import com.example.fas.mapper.dto.UserDto.UserResponseDto;
 import com.example.fas.mapper.dto.UserDto.UserUpdateRequest;
@@ -11,8 +12,6 @@ import com.example.fas.repositories.services.serviceImpl.exceptions.user.error.H
 import com.example.fas.repositories.services.serviceImpl.exceptions.user.error.HadUserDeteleException;
 import com.example.fas.repositories.services.serviceImpl.exceptions.user.error.HadUserRoleAdminException;
 import com.example.fas.repositories.services.serviceImpl.exceptions.user.exists.EmailExistsException;
-import com.example.fas.repositories.services.serviceImpl.exceptions.user.exists.IdentityCardExistsException;
-import com.example.fas.repositories.services.serviceImpl.exceptions.user.exists.PhoneNumberExistsException;
 import com.example.fas.repositories.services.serviceImpl.exceptions.user.exists.UsernameExistsException;
 import com.example.fas.repositories.services.serviceImpl.exceptions.user.invalid.*;
 import com.example.fas.repositories.services.serviceImpl.exceptions.user.notFound.AvatarUrlNotFoundException;
@@ -27,7 +26,6 @@ import com.example.fas.repositories.UserRepository;
 import com.example.fas.repositories.services.UserService;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
@@ -65,7 +63,6 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(dto);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setUserStatus(UserStatus.ACTIVE);
-        user.setPremium(false);
         user.setRole(roleRepository.findByRoleName("USER"));
 
         return userMapper.toDto(userRepository.saveAndFlush(user));
@@ -85,25 +82,20 @@ public class UserServiceImpl implements UserService {
         if (user.getPassword() == null || user.getPassword().isEmpty() || user.getPassword().length() < 8) {
             throw new PasswordInvalidException("Password must be at least 8 characters");
         }
-        // Validate password contains at least one uppercase letter, one lowercase letter, one digit, and one special character
-        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&.]{8,}$")) {
-            throw new PasswordInvalidException(
-                    "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
-        }
         // Thoát dấu chấm bằng \\. để đảm bảo an toàn trong Java String
-        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&\\.])[A-Za-z\\d@$!%*?&\\.]{8,}$")) {
+        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&.])[A-Za-z\\d@$!%*?&\\.]{8,}$")) {
             throw new PasswordInvalidException(
                     "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character");
         }
-        if (user.getIdentityCard() == null || user.getIdentityCard().isEmpty()) {
-            throw new PhoneNumberInvalidException("Identity card cannot be null or empty");
-        }
-        if (user.getIdentityCard().length() != 12) {
-            throw new PhoneNumberInvalidException("Identity card must be exactly 12 digits long");
-        }
-        if (!user.getIdentityCard().matches("^\\d{12}$")) {
-            throw new PhoneNumberInvalidException("Identity card must contain only digits");
-        }
+//        if (user.getIdentityCard() == null || user.getIdentityCard().isEmpty()) {
+//            throw new PhoneNumberInvalidException("Identity card cannot be null or empty");
+//        }
+//        if (user.getIdentityCard().length() != 12) {
+//            throw new PhoneNumberInvalidException("Identity card must be exactly 12 digits long");
+//        }
+//        if (!user.getIdentityCard().matches("^\\d{12}$")) {
+//            throw new PhoneNumberInvalidException("Identity card must contain only digits");
+//        }
         if (user.getEmail() == null || user.getEmail().isEmpty()) {
             throw new EmailInvalidException("Email cannot be null or empty");
         }
@@ -115,20 +107,20 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new UsernameExistsException("Username already exists");
         }
-        if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
-            throw new PhoneNumberExistsException("Phone number already exists");
-        }
-        if (userRepository.existsByIdentityCard(user.getIdentityCard())) {
-            throw new IdentityCardExistsException("Identity card already exists");
-        }
+//        if (userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
+//            throw new PhoneNumberExistsException("Phone number already exists");
+//        }
+//        if (userRepository.existsByIdentityCard(user.getIdentityCard())) {
+//            throw new IdentityCardExistsException("Identity card already exists");
+//        }
         if (userRepository.existsByEmail(user.getEmail().trim().toLowerCase())) {
             throw new EmailExistsException("Email already exists");
         }
     }
 
     /**
+     * This function validates a user ID.
      * @param id
-     *
      */
     @Override
     public void validateUserId(Long id) {
@@ -140,19 +132,19 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    /**
-     * This function validates a monetary amount.
-     *
-     * @param amount - The monetary amount to validate. (VND)
-     *               Chuẩn hóa số tiền: Loại VND không có chữ số thập phân, ví dụ 10000.50 là không hợp lệ
-     *               Số tiền phải là số dương lớn hơn 0
-     */
-    @Override
-    public void validateAmount(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0 || amount.scale() == 0) {
-            throw new AmountInvalidException("Amount must be a positive number and cannot have decimal places (VND)");
-        }
-    }
+//    /**
+//     * This function validates a monetary amount.
+//     *
+//     * @param amount - The monetary amount to validate. (VND)
+//     *               Chuẩn hóa số tiền: Loại VND không có chữ số thập phân, ví dụ 10000.50 là không hợp lệ
+//     *               Số tiền phải là số dương lớn hơn 0
+//     */
+//    @Override
+//    public void validateAmount(BigDecimal amount) {
+//        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0 || amount.scale() == 0) {
+//            throw new AmountInvalidException("Amount must be a positive number and cannot have decimal places (VND)");
+//        }
+//    }
 
     /**
      * This function updates a user's information.
@@ -176,10 +168,10 @@ public class UserServiceImpl implements UserService {
             user.setPassword(passwordEncoder.encode(userUpdateRequest.getPassword()));
         }
 
-        if (!userUpdateRequest.getPhoneNumber().isEmpty() && userUpdateRequest.getPhoneNumber()
-                .matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
-            user.setPhoneNumber(userUpdateRequest.getPhoneNumber());
-        }
+//        if (!userUpdateRequest.getPhoneNumber().isEmpty() && userUpdateRequest.getPhoneNumber()
+//                .matches("^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$")) {
+//            user.setPhoneNumber(userUpdateRequest.getPhoneNumber());
+//        }
 
         if (!userUpdateRequest.getEmail().isEmpty()) {
             String normalized = userUpdateRequest.getEmail().trim().toLowerCase();
@@ -190,11 +182,6 @@ public class UserServiceImpl implements UserService {
                 throw new EmailExistsException("Email already exists");
             }
             user.setEmail(normalized);
-        }
-
-        if (!userUpdateRequest.getIdentityCard().isEmpty()
-                && userUpdateRequest.getIdentityCard().matches("^\\d{12}$")) {
-            user.setIdentityCard(userUpdateRequest.getIdentityCard());
         }
 
         if (!userUpdateRequest.getAvatarUrl().isEmpty()) {
@@ -237,6 +224,22 @@ public class UserServiceImpl implements UserService {
         } else {
             throw new HadUserRoleAdminException("User with ID " + id + " is not allowed to be admin");
         }
+        return userMapper.toDto(userRepository.saveAndFlush(user));
+    }
+
+    /**
+     * This function changes a user's password.
+     * @param changePassword The change password request containing old and new passwords.
+     * @return UserResponseDto
+     */
+    @Override
+    public UserResponseDto changePassword(ChangePassword changePassword) {
+        validateUserId(changePassword.getId());
+        User user = getUserEntityById(changePassword.getId());
+        if (!passwordEncoder.matches(changePassword.getOldPassword(), user.getPassword())) {
+            throw new PasswordInvalidException("Old password is not valid");
+        }
+        user.setPassword(passwordEncoder.encode(changePassword.getNewPassword()));
         return userMapper.toDto(userRepository.saveAndFlush(user));
     }
 
@@ -311,39 +314,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    /**
-     * This function upgrades a user to premium status.
-     * @param id The ID of the user to be upgraded to premium.
-     */
-    @Override
-    @Transactional
-    public void idPremiumUser(Long id) {
-        validateUserId(id);
-        User user = getUserEntityById(id);
-        if (user.isPremium()) {
-            throw new IdentityCardExistsException("User with ID " + id + " is already premium");
-        } else {
-            user.setPremium(true);
-            userRepository.save(user);
-        }
-    }
 
-    /**
-     * This function removes premium status from a user.
-     * @param id The ID of the user to be downgraded from premium.
-     */
-    @Override
-    @Transactional
-    public void removePremiumUser(Long id) {
-        validateUserId(id);
-        User user = getUserEntityById(id);
-        if (!user.isPremium()) {
-            throw new IdentityCardExistsException("User with ID " + id + " is not premium");
-        } else {
-            user.setPremium(false);
-            userRepository.save(user);
-        }
-    }
 
     /**
      * This function retrieves a user by their ID.
@@ -372,8 +343,6 @@ public class UserServiceImpl implements UserService {
 
     /**
      * Retrieves a user by their username.
-     * TODO: Chuẩn hoá username trước khi truy vấn
-     *
      * @param username - The username of the user to retrieve.
      * @return UserResponseDto - The user details.
      */
@@ -386,38 +355,41 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(user);
     }
 
-    /**
-     * Retrieves a user by their identity card number.
-     *
-     * @param identityCard - The identity card number of the user to retrieve.
-     * @return UserResponseDto - The user details.
-     */
-    @Override
-    public UserResponseDto getUserByIdentityCard(String identityCard) {
-        if (identityCard == null || identityCard.length() != 12 || !identityCard.matches("^\\d{12}$") || identityCard.trim().isEmpty()) {
-            throw new IdentityCardInvalidException("Identity card cannot be null or empty");
-        }
-        return userMapper.toDto(userRepository.findByIdentityCard(identityCard));
-    }
+//    /**
+//     * Retrieves a user by their identity card number.
+//     *
+//     * @param identityCard - The identity card number of the user to retrieve.
+//     * @return UserResponseDto - The user details.
+//     */
+//    @Override
+//    public UserResponseDto getUserByIdentityCard(String identityCard) {
+//        if (identityCard == null || identityCard.length() != 12 || !identityCard.matches("^\\d{12}$") || identityCard.trim().isEmpty()) {
+//            throw new IdentityCardInvalidException("Identity card cannot be null or empty");
+//        }
+//        return userMapper.toDto(userRepository.findByIdentityCard(identityCard));
+//    }
+
+//    /**
+//     * This function retrieves a user by their phone number.
+//     *
+//     * @param phoneNumber - The phone number of the user to retrieve.
+//     * @return UserResponseDto - The user details.
+//     */
+//    @Override
+//    public UserResponseDto getUserByPhoneNumber(String phoneNumber) {
+//        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+//            throw new PhoneNumberInvalidException("Phone number cannot be null or empty");
+//        }
+//        UserResponseDto userResponseDto = userMapper.toDto(userRepository.findByPhoneNumber(phoneNumber));
+//        if (userResponseDto == null) {
+//            throw new PhoneNumberInvalidException("User with phone number " + phoneNumber + " not found");
+//        }
+//        return userResponseDto;
+//    }
 
     /**
-     * This function retrieves a user by their phone number.
-     *
-     * @param phoneNumber - The phone number of the user to retrieve.
-     * @return UserResponseDto - The user details.
+     * This function retrieves a user by their full name.
      */
-    @Override
-    public UserResponseDto getUserByPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-            throw new PhoneNumberInvalidException("Phone number cannot be null or empty");
-        }
-        UserResponseDto userResponseDto = userMapper.toDto(userRepository.findByPhoneNumber(phoneNumber));
-        if (userResponseDto == null) {
-            throw new PhoneNumberInvalidException("User with phone number " + phoneNumber + " not found");
-        }
-        return userResponseDto;
-    }
-
     @Override
     public UserResponseDto getUserByFullName(String fullName) {
         if (fullName == null || fullName.isEmpty()) {
@@ -433,6 +405,11 @@ public class UserServiceImpl implements UserService {
         return userResponseDto;
     }
 
+    /**
+     * This function deletes a user by their ID.
+     *
+     * @param id - The ID of the user to delete.
+     */
     @Override
     @Transactional
     public void deleteUserById(Long id) {
@@ -446,6 +423,11 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    /**
+     * This function deletes a user by their username.
+     *
+     * @param username - The username of the user to delete.
+     */
     @Override
     @Transactional
     public void deleteUserByUsername(String username) {
@@ -462,79 +444,79 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    @Override
-    @Transactional
-    public void deleteUserByIdentityCard(String identityCard) {
-        validateUserByIdentityCard(identityCard);
-        UserResponseDto userResponseDto = getUserByIdentityCard(identityCard);
-        User user = getUserEntityById(userResponseDto.getId());
-        if (user.getUserStatus() == UserStatus.DELETED) {
-            throw new HadUserDeteleException("User with identity card " + identityCard + " is already deleted");
-        } else if (user.getUserStatus() == UserStatus.BANNED_PERMANENT) {
-            throw new HadUserDeteleException("User with identity card " + identityCard + " is banned, cannot delete");
-        }
-        user.setUserStatus(UserStatus.DELETED);
-        userRepository.save(user);
-    }
-
-    /**
-     * This function retrieves the balance of a user by their ID.
-     *
-     * @param id - The ID of the user whose balance is to be retrieved.
-     * @return BigDecimal - The balance of the user.
-     * Throws exceptions if the user ID is invalid or the user is not found.
-     */
-    @Override
-    public BigDecimal getBalanceById(Long id) {
-        validateUserId(id);
-        User user = getUserEntityById(id);
-        return user.getBalance();
-    }
-
-    /**
-     * This function updates the balance of a user by their ID.
-     * *
-     *
-     * @param id         The ID of the user whose balance is to be updated.
-     * @param newBalance - The new balance to set for the user.
-     */
-    @Override
-    @Transactional
-    public void updateBalanceById(Long id, BigDecimal newBalance) {
-        validateAmount(newBalance);
-        User user = getUserEntityById(id);
-        user.setBalance(newBalance);
-    }
-
-    /**
-     * This function increases the balance of a user by a specified amount.
-     * *
-     *
-     * @param id     - The ID of the user whose balance is to be increased.
-     * @param amount - The amount to increase the user's balance by.
-     */
-    @Override
-    @Transactional
-    public void increaseBalance(Long id, BigDecimal amount) {
-        User user = getUserEntityById(id);
-        validateAmount(amount);
-        user.setBalance(user.getBalance().add(amount));
-    }
-
-    /**
-     * This function decreases the balance of a user by a specified amount.
-     * *
-     *
-     * @param id     - The ID of the user whose balance is to be decreased.
-     * @param amount - The amount to decrease the user's balance by.
-     */
-    @Override
-    @Transactional
-    public void decreaseBalance(Long id, BigDecimal amount) {
-        validateAmount(amount);
-        User user = getUserEntityById(id);
-        user.setBalance(user.getBalance().subtract(amount));
-    }
+//    @Override
+//    @Transactional
+//    public void deleteUserByIdentityCard(String identityCard) {
+//        validateUserByIdentityCard(identityCard);
+//        UserResponseDto userResponseDto = getUserByIdentityCard(identityCard);
+//        User user = getUserEntityById(userResponseDto.getId());
+//        if (user.getUserStatus() == UserStatus.DELETED) {
+//            throw new HadUserDeteleException("User with identity card " + identityCard + " is already deleted");
+//        } else if (user.getUserStatus() == UserStatus.BANNED_PERMANENT) {
+//            throw new HadUserDeteleException("User with identity card " + identityCard + " is banned, cannot delete");
+//        }
+//        user.setUserStatus(UserStatus.DELETED);
+//        userRepository.save(user);
+//    }
+//
+//    /**
+//     * This function retrieves the balance of a user by their ID.
+//     *
+//     * @param id - The ID of the user whose balance is to be retrieved.
+//     * @return BigDecimal - The balance of the user.
+//     * Throws exceptions if the user ID is invalid or the user is not found.
+//     */
+//    @Override
+//    public BigDecimal getBalanceById(Long id) {
+//        validateUserId(id);
+//        User user = getUserEntityById(id);
+//        return user.getBalance();
+//    }
+//
+//    /**
+//     * This function updates the balance of a user by their ID.
+//     * *
+//     *
+//     * @param id         The ID of the user whose balance is to be updated.
+//     * @param newBalance - The new balance to set for the user.
+//     */
+//    @Override
+//    @Transactional
+//    public void updateBalanceById(Long id, BigDecimal newBalance) {
+//        validateAmount(newBalance);
+//        User user = getUserEntityById(id);
+//        user.setBalance(newBalance);
+//    }
+//
+//    /**
+//     * This function increases the balance of a user by a specified amount.
+//     * *
+//     *
+//     * @param id     - The ID of the user whose balance is to be increased.
+//     * @param amount - The amount to increase the user's balance by.
+//     */
+//    @Override
+//    @Transactional
+//    public void increaseBalance(Long id, BigDecimal amount) {
+//        User user = getUserEntityById(id);
+//        validateAmount(amount);
+//        user.setBalance(user.getBalance().add(amount));
+//    }
+//
+//    /**
+//     * This function decreases the balance of a user by a specified amount.
+//     * *
+//     *
+//     * @param id     - The ID of the user whose balance is to be decreased.
+//     * @param amount - The amount to decrease the user's balance by.
+//     */
+//    @Override
+//    @Transactional
+//    public void decreaseBalance(Long id, BigDecimal amount) {
+//        validateAmount(amount);
+//        User user = getUserEntityById(id);
+//        user.setBalance(user.getBalance().subtract(amount));
+//    }
 
     /**
      * This function retrieves a user entity by their ID.
@@ -558,21 +540,21 @@ public class UserServiceImpl implements UserService {
      *
      * @return void - Throws exceptions if validation fails.
      */
-    @Override
-    public void validateUserByIdentityCard(String identityCard) {
-        if (identityCard == null || identityCard.isEmpty()) {
-            throw new IdentityCardInvalidException("Identity card cannot be null or empty");
-        }
-        if (identityCard.length() != 12) {
-            throw new IdentityCardInvalidException("Identity card must be exactly 12 digits long");
-        }
-        if (!identityCard.matches("^\\d{12}$")) {
-            throw new IdentityCardInvalidException("Identity card must contain only digits");
-        }
-        if (!userRepository.existsByIdentityCard(identityCard)) {
-            throw new IdentityCardInvalidException("User with identity card " + identityCard + " does not exist");
-        }
-    }
+//    @Override
+//    public void validateUserByIdentityCard(String identityCard) {
+//        if (identityCard == null || identityCard.isEmpty()) {
+//            throw new IdentityCardInvalidException("Identity card cannot be null or empty");
+//        }
+//        if (identityCard.length() != 12) {
+//            throw new IdentityCardInvalidException("Identity card must be exactly 12 digits long");
+//        }
+//        if (!identityCard.matches("^\\d{12}$")) {
+//            throw new IdentityCardInvalidException("Identity card must contain only digits");
+//        }
+//        if (!userRepository.existsByIdentityCard(identityCard)) {
+//            throw new IdentityCardInvalidException("User with identity card " + identityCard + " does not exist");
+//        }
+//    }
 
     /*
      * This function retrieves a user by their email address.
@@ -620,6 +602,9 @@ public class UserServiceImpl implements UserService {
         return userResponseDto;
     }
 
+    /**
+     * This function retrieves a user by their provider ID.
+     */
     @Override
     public UserResponseDto getUserByProviderId(String providerId) {
         if (providerId == null || providerId.isEmpty()) {
@@ -634,8 +619,6 @@ public class UserServiceImpl implements UserService {
 
     /**
      * * This function retrieves a set of users by their userStatus.
-     * *
-     *
      * @param status userStatus - The userStatus of the users to retrieve.
      * @return Set<UserResponseDto> - A set of user details.
      */
@@ -646,8 +629,6 @@ public class UserServiceImpl implements UserService {
 
     /**
      * * This function retrieves a set of users by their social provider.
-     * *
-     *
      * @param provider provider - The social provider of the users to retrieve.
      * @return Set<UserResponseDto> - A set of user details.
      */
@@ -676,7 +657,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserResponseDto getInfoUserCurrent(Authentication authentication) {
-        // Validate authentication object
+        // Validate an authentication object
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new AccessTokenInvalidException("Authentication is null or invalid");
         }

@@ -26,14 +26,14 @@ public class UserUpdateRequest {
             , message = "Password must contain at least one uppercase letter, one lowercase letter, and one digit")
     private String password;
 
-    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")
-    private String phoneNumber;
+//    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")
+//    private String phoneNumber;
 
     @Email(message = "Email should be valid")
     private String email;
 
     private String avatarUrl;
 
-    @Pattern(regexp = "^\\d{12}$", message = "CCCD must be exactly 12 digits")
-    private String identityCard;
+//    @Pattern(regexp = "^\\d{12}$", message = "CCCD must be exactly 12 digits")
+//    private String identityCard;
 }

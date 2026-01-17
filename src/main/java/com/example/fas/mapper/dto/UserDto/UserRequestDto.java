@@ -29,14 +29,14 @@ public class UserRequestDto {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
-    @NotBlank(message = "CCCD cannot be blank")
-    @Pattern(regexp = "^\\d{12}$", message = "CCCD must be exactly 12 digits")
-    private String identityCard;
+//    @NotBlank(message = "CCCD cannot be blank")
+//    @Pattern(regexp = "^\\d{12}$", message = "CCCD must be exactly 12 digits")
+//    private String identityCard;
 
     @Email(message = "Email should be valid")
     private String email;
 
-    @NotNull(message = "Phone number cannot be null")
-    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")
-    private String phoneNumber;
+//    @NotNull(message = "Phone number cannot be null")
+//    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[689]|7[0-9]|8[1-5]|9[0-46-9])[0-9]{7}$", message = "Invalid phone number")
+//    private String phoneNumber;
 }

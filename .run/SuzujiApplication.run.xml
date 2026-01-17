@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="FasApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+  <configuration default="false" name="SuzujiApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="envFilePaths">
       <option value="$PROJECT_DIR$/.env" />
       <option value="$PROJECT_DIR$/.env" />
