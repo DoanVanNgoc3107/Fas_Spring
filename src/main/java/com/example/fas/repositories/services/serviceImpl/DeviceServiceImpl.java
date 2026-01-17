@@ -3,6 +3,7 @@ package com.example.fas.repositories.services.serviceImpl;
 import com.example.fas.mapper.dto.SensorDto.LatestSensorDataDto;
 import com.example.fas.mapper.dto.SensorDto.SensorDataRequestDto;
 import com.example.fas.mapper.dto.SensorDto.SensorDataResponseDto;
+import com.example.fas.mapper.dto.deviceDto.DeviceResponseDto;
 import com.example.fas.mapper.dto.deviceDto.RegisterDevice;
 import com.example.fas.model.*;
 import com.example.fas.model.enums.device.DeviceStatus;
@@ -10,9 +11,13 @@ import com.example.fas.model.enums.TypeSensor;
 import com.example.fas.repositories.services.DeviceRepository;
 import com.example.fas.repositories.services.SensorDataRepository;
 import com.example.fas.repositories.UserRepository;
+import com.example.fas.repositories.services.serviceImpl.exceptions.device.DeviceCodeExistException;
+import com.example.fas.repositories.services.serviceImpl.exceptions.general.notfound.IdNotFoundException;
+import com.example.fas.repositories.services.serviceImpl.exceptions.user.notFound.UserIDNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 import org.hibernate.annotations.Check;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -61,48 +68,54 @@ public class DeviceServiceImpl {
         deviceRepository.save(device);
     }
 
-    // public boolean checkConnection(checkConnectDevideRequest request) {
-
-    //         return true; // Thay thế bằng logic thực tế
-    // }
-
     /**
      * Đăng ký thiết bị mới
-     *
      * @param request Thông tin thiết bị cần đăng ký
      */
     @Transactional
     public void registerDevice(RegisterDevice request) {
         // Kiểm tra xem deviceCode đã tồn tại chưa
         if (deviceRepository.findByDeviceCode(request.getDeviceCode()).isPresent()) {
-            throw new RuntimeException("Thiết bị với mã " + request.getDeviceCode() + " đã tồn tại");
+            throw new DeviceCodeExistException("Thiết bị với mã " + request.getDeviceCode() + " đã tồn tại");
+        }
+
+        if (request.getIpV4Address() == null || request.getIpV4Address().isEmpty() || !deviceRepository.existsByIpV4Address(request.getIpV4Address())) {
+            throw new RuntimeException("Địa chỉ IP " + request.getIpV4Address() + " không hợp lệ hoặc đã được sử dụng");
         }
 
         // Tìm user theo userId
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy user với ID: " + request.getUserId()));
+                .orElseThrow(() -> new UserIDNotFoundException("Không tìm thấy user với ID: " + request.getUserId()));
 
         // Tạo thiết bị mới với các giá trị mặc định
         Device device = Device.builder()
                 .deviceCode(request.getDeviceCode())
                 .nameDevice(request.getDeviceName())
                 .description(request.getDescription())
-                .user(user)  // Gán user cho thiết bị
+                .user(user)
                 .ipV4Address(request.getIpV4Address())
                 .status(DeviceStatus.ACTIVE)
-                .safetyThreshold(300.0) // Giá trị mặc định
-                .warningThreshold(500.0) // Giá trị mặc định
-                .dangerThreshold(700.0) // Giá trị mặc định
+                .safetyThreshold(300.0)
+                .warningThreshold(500.0)
+                .dangerThreshold(700.0)
                 .lastActiveTime(Instant.now())
                 .build();
 
-        deviceRepository.save(device);
+        Set<Device> listDevice = user.getDevices();
+        listDevice.add(device);
+        user.setDevices(listDevice);
+
+        try {
+            userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new DeviceCodeExistException("Thiết bị với mã " + request.getDeviceCode() + " đã tồn tại");
+        }
     }
+
 
     /**
      * Kiểm tra trạng thái kết nối của thiết bị
      * Thiết bị được coi là OFFLINE nếu không gửi heartbeat trong vòng 5 phút
-     *
      * @param deviceCode Mã thiết bị cần kiểm tra
      * @return true nếu thiết bị ONLINE, false nếu OFFLINE
      */
@@ -153,6 +166,26 @@ public class DeviceServiceImpl {
     public Page<SensorDataResponseDto> getSensorDataByDeviceCode(String deviceCode, Pageable pageable) {
         Page<SensorData> sensorDataPage = sensorDataRepository.findByDeviceCode(deviceCode, pageable);
         return sensorDataPage.map(this::convertToResponseDto);
+    }
+
+    /**
+     *
+     */
+    public DeviceResponseDto getDeviceById(Long id) {
+        if (id <= 0) {
+            throw new IdNotFoundException("Id của thiết bị không hợp lệ: " + id);
+        }
+
+        Optional<Device> device = deviceRepository.findById(id);
+        return DeviceResponseDto.builder()
+                .ownerId(device.get().getUser().getId())
+                .deviceCode(device.get().getDeviceCode())
+                .nameDevice(device.get().getNameDevice())
+                .room(String.valueOf(device.get().getRoom()))
+                .description(device.get().getDescription())
+                .status(device.get().getStatus().name())
+                .ipV4Address(device.get().getIpV4Address())
+                .build();
     }
 
     /**

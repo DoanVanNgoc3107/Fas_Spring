@@ -6,8 +6,6 @@ import lombok.Data;
 
 @Data
 public class RegisterDevice {
-    private String accessToken;
-
     @NotBlank(message = "Device code must not be blank")
     private String deviceCode;
 
