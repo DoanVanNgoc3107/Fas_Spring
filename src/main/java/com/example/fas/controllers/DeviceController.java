@@ -16,11 +16,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @RestController
@@ -32,6 +32,7 @@ public class DeviceController {
 
     /**
      * Kiểm tra trạng thái kết nối của thiết bị
+     *
      * @param deviceCode Mã thiết bị
      */
     @PostMapping("/test-connection/{deviceCode}")
@@ -40,7 +41,9 @@ public class DeviceController {
     }
 
     /**
+     * Lấy thông tin của thiết bị theo ID
      *
+     * @param id ID thiết bị
      */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<DeviceResponseDto>> getDeviceByCode(@PathVariable Long id) {
@@ -50,7 +53,7 @@ public class DeviceController {
                     "Lấy thông tin thiết bị thành công.!",
                     deviceService.getDeviceById(id),
                     null
-                    );
+            );
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.ok(ApiResponse.error("Lấy thiết bị thất bại: " + e.getMessage(), null));
@@ -59,6 +62,7 @@ public class DeviceController {
 
     /**
      * Đăng ký thiết bị mới cho user
+     *
      * @param request request Thông tin đăng ký thiết bị
      */
     @PostMapping("/register/device")
@@ -69,6 +73,7 @@ public class DeviceController {
 
     /**
      * Nhận dữ liệu cảm biến từ thiết bị
+     *
      * @param request Dữ liệu cảm biến từ thiết bị
      */
     @PostMapping("/data")
@@ -76,7 +81,7 @@ public class DeviceController {
         deviceService.processSensorData(request);
         return ResponseEntity.ok(ApiResponse.success("Dữ liệu đã được xử lý thành công", null));
     }
-    
+
     /**
      * Lấy tất cả dữ liệu cảm biến của một thiết bị (có phân trang)
      */
@@ -85,10 +90,10 @@ public class DeviceController {
             @PathVariable String deviceCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
         Page<SensorDataResponseDto> data = deviceService.getSensorDataByDeviceCode(deviceCode, pageable);
-        
+
         return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
     }
 
@@ -101,50 +106,83 @@ public class DeviceController {
             @PathVariable TypeSensor typeSensor,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
         Page<SensorDataResponseDto> data = deviceService.getSensorDataByDeviceCodeAndType(
                 deviceCode, typeSensor, pageable);
-        
+
         return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
     }
 
     /**
      * Lấy dữ liệu mới nhất của thiết bị (cho dashboard real-time)
      */
-    @GetMapping("/{deviceCode}/latest")
+    @GetMapping("/{id}/latest")
     public ResponseEntity<ApiResponse<LatestSensorDataDto>> getLatestSensorData(
-            @PathVariable String deviceCode) {
-        
-        LatestSensorDataDto data = deviceService.getLatestSensorData(deviceCode);
+            @PathVariable Long id) {
+
+        LatestSensorDataDto data = deviceService.getLatestSensorData(id);
         return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
     }
 
     /**
      * Lấy dữ liệu trong khoảng thời gian
      */
-    @GetMapping("/{deviceCode}/sensor-data/range")
+    @GetMapping("/{id}/sensor-data/range")
     public ResponseEntity<ApiResponse<List<SensorDataResponseDto>>> getSensorDataByTimeRange(
-            @PathVariable String deviceCode,
+            @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endTime) {
-        
+
         List<SensorDataResponseDto> data = deviceService.getSensorDataByTimeRange(
-                deviceCode, startTime, endTime);
-        
+                id, startTime, endTime);
+
         return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
     }
 
 
     /**
      * Lấy dữ liệu cảm biến gần đây nhất (ví dụ: 10 bản ghi gần nhất)
-     * @param deviceCode Mã thiết bị
+     *
      */
-    @GetMapping("/{deviceCode}/recent")
+    @GetMapping("/{id}/recent")
     public ResponseEntity<ApiResponse<List<SensorDataResponseDto>>> getRecentSensorData(
-            @PathVariable String deviceCode) {
-        
-        List<SensorDataResponseDto> data = deviceService.getRecentSensorData(deviceCode);
+            @PathVariable Long id) {
+
+        List<SensorDataResponseDto> data = deviceService.getRecentSensorData(id);
+        return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
+    }
+
+
+    @GetMapping("/{id}/sensor-data/last")
+    public ResponseEntity<ApiResponse<List<SensorDataResponseDto>>> getSensorDataLastHours(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "1") int hours) {
+
+        // Chỉ chấp nhận 1, 7, 24 theo yêu cầu
+        if (hours != 1 && hours != 7 && hours != 24) {
+            return ResponseEntity.ok(ApiResponse.error("Tham số 'hours' phải là 1, 7 hoặc 24", null));
+        }
+
+        Instant endTime = Instant.now();
+        Instant startTime = endTime.minus(hours, ChronoUnit.HOURS);
+
+        List<SensorDataResponseDto> data = deviceService.getSensorDataByTimeRange(id, startTime, endTime);
+
+        return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
+    }
+
+    /**
+     * Lấy dữ liệu cảm biến mới sau một timestamp cụ thể (cho incremental update)
+     */
+    @GetMapping("/{id}/sensor-data/after")
+    public ResponseEntity<ApiResponse<List<SensorDataResponseDto>>> getSensorDataAfterTimestamp(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant afterTimestamp) {
+
+        Instant endTime = Instant.now();
+        List<SensorDataResponseDto> data = deviceService.getSensorDataByTimeRange(id, afterTimestamp, endTime);
+
         return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
     }
 }

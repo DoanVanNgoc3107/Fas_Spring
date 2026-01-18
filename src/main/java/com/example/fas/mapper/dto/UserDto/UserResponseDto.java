@@ -18,7 +18,7 @@ public class UserResponseDto {
     private String provider;
     private String status;
     private String role;
-    private List<String> deviceCodes;
+    private List<Long> deviceId;
 
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private Instant createdAt;

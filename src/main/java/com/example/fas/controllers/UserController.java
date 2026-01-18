@@ -136,17 +136,6 @@ public class UserController {
         return new ResponseEntity<>(success("Restore user success.!", null), HttpStatus.NO_CONTENT);
     }
 
-//    /**
-//     * @param identityCard The identity card number of the user to retrieve.
-//     * @return A ResponseEntity containing an ApiResponse with the user information.
-//     * This function retrieves a user by their identity card number.
-//     */
-//    @GetMapping("/identity/{identityCard}")
-//    public ResponseEntity<ApiResponse<UserResponseDto>> getUserByIdentityCard(@PathVariable String identityCard) {
-//        var response = new ApiResponse<>(HttpStatus.OK, "User retrieved successfully", userServiceImpl.getUserByIdentityCard(identityCard), null);
-//        return ResponseEntity.ok(response);
-//    }
-
     /**
      * This function retrieves a user by their full name.
      *
@@ -200,25 +189,6 @@ public class UserController {
         userServiceImpl.deleteUserByUsername(username);
         return new ResponseEntity<>(success("Delete user success.!", null), HttpStatus.NO_CONTENT);
     }
-
-//    @GetMapping("/balance/{id}")
-//    public ResponseEntity<ApiResponse<BigDecimal>> getBalanceById(@PathVariable Long id) {
-//        BigDecimal balance = userServiceImpl.getBalanceById(id);
-//        var response = new ApiResponse<>(HttpStatus.OK, "Balance retrieved successfully", balance, null);
-//        return ResponseEntity.ok(response);
-//    }
-//
-//    @PutMapping("/balance/update/{id}")
-//    public ResponseEntity<ApiResponse<Void>> updateBalanceById(@PathVariable Long id, @RequestBody BigDecimal newBalance) {
-//        userServiceImpl.updateBalanceById(id, newBalance);
-//        return new ResponseEntity<>(success("Update balance success.!", null), HttpStatus.NO_CONTENT);
-//    }
-//
-//    @PutMapping("/balance/increase/{id}")
-//    public ResponseEntity<ApiResponse<Void>> increaseBalance(@PathVariable Long id, @RequestBody BigDecimal amount) {
-//        userServiceImpl.increaseBalance(id, amount);
-//        return new ResponseEntity<>(success("Increase balance success.!", null), HttpStatus.NO_CONTENT);
-//    }
 
     @PutMapping("/change-password")
     public ResponseEntity<ApiResponse<UserResponseDto>> changePassword(@Valid @RequestBody ChangePassword changePassword) {

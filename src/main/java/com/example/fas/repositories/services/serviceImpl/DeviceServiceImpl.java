@@ -205,12 +205,12 @@ public class DeviceServiceImpl {
 
     /**
      * Lấy dữ liệu mới nhất (cho dashboard real-time)
-     * @param deviceCode Mã thiết bị
+     * @param id Mã thiết bị
      * @return LatestSensorDataDto chứa dữ liệu mới nhất
      */
-    public LatestSensorDataDto getLatestSensorData(String deviceCode) {
-        Device device = deviceRepository.findByDeviceCode(deviceCode)
-                .orElseThrow(() -> new RuntimeException("Thiết bị không tồn tại: " + deviceCode));
+    public LatestSensorDataDto getLatestSensorData(Long id) {
+        Device device = deviceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Thiết bị không tồn tại: " + id));
 
         // Lấy dữ liệu MQ2 mới nhất
         SensorData latestMq2 = sensorDataRepository
@@ -231,13 +231,13 @@ public class DeviceServiceImpl {
     }
 
     /**
-     * Lấy dữ liệu trong khoảng thời gian
+     * Lấy dữ liệu trong khoảng thời gian dựa trên id
      */
     public List<SensorDataResponseDto> getSensorDataByTimeRange(
-            String deviceCode, Instant startTime, Instant endTime) {
+            Long id, Instant startTime, Instant endTime) {
 
-        Device device = deviceRepository.findByDeviceCode(deviceCode)
-                .orElseThrow(() -> new RuntimeException("Thiết bị không tồn tại: " + deviceCode));
+        Device device = deviceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Thiết bị không tồn tại: " + id));
 
         List<SensorData> sensorDataList = sensorDataRepository
                 .findByDeviceIdAndTimestampBetween(device.getId(), startTime, endTime);
@@ -250,9 +250,9 @@ public class DeviceServiceImpl {
     /**
      * Lấy 10 bản ghi mới nhất
      */
-    public List<SensorDataResponseDto> getRecentSensorData(String deviceCode) {
-        Device device = deviceRepository.findByDeviceCode(deviceCode)
-                .orElseThrow(() -> new RuntimeException("Thiết bị không tồn tại: " + deviceCode));
+    public List<SensorDataResponseDto> getRecentSensorData(Long id) {
+        Device device = deviceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Thiết bị không tồn tại: " + id));
 
         List<SensorData> sensorDataList = sensorDataRepository
                 .findTop10ByDeviceIdOrderByTimestampDesc(device.getId());

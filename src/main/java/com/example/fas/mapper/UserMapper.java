@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.example.fas.model.Device;
 import org.springframework.stereotype.Component;
 
 import com.example.fas.mapper.dto.UserDto.UserRequestDto;
@@ -58,7 +59,7 @@ public class UserMapper implements EntityMapper<UserResponseDto, User, UserReque
                 .provider(user.getProvider() != null ? user.getProvider().name() : "NONE")
                 .createdAt(Instant.parse(String.valueOf(user.getCreatedAt())))
                 .updatedAt(Instant.parse(String.valueOf(user.getUpdatedAt())))
-                .deviceCodes(user.getDevices() != null ? user.getDevices().stream().map(device -> device.getDeviceCode()).collect(Collectors.toList()) : null)
+                .deviceId(user.getDevices() != null ? user.getDevices().stream().map(Device::getId).collect(Collectors.toList()) : null)
                 .build();
     }
 
