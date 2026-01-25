@@ -15,13 +15,17 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000", // Local development
-                "https://doanvanngoc3107.store"));
+        // Use setAllowedOriginPatterns to support wildcards
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*", // Local development (any port)
+                "https://doanvanngoc3107.store",
+                "https://*.vercel.app", // All Vercel deployments
+                "https://fas-*.vercel.app" // Specific pattern for FAS frontend
+        ));
 
         // Cho phép ...
         configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
 
         // Cho phép tất cả headers
         configuration.setAllowedHeaders(List.of("*"));
