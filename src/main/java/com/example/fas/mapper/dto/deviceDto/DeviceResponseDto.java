@@ -1,23 +1,13 @@
 package com.example.fas.mapper.dto.deviceDto;
-
-import com.example.fas.model.SensorData;
-import com.example.fas.model.User;
-import com.example.fas.model.enums.device.DeviceStatus;
-import com.example.fas.model.enums.room.RoomType;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import lombok.Builder;
 import lombok.Data;
-
-import java.time.Instant;
-import java.util.List;
+import lombok.Builder;
 
 @Data
 @Builder
 public class DeviceResponseDto {
+
+    private Long id;
+
     private String deviceCode;
 
     private String nameDevice;
@@ -36,7 +26,7 @@ public class DeviceResponseDto {
 
     private Double dangerThreshold; // Ngưỡng nguy cấp
 
-    private String status;
+    private String status; // ACTIVE, WARNING, DANGER
 
     private String lastActiveTime;
 }

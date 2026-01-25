@@ -15,12 +15,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    // Check exists by username, identity card, phone number
     boolean existsByUsername(String username);
-
-//    boolean existsByIdentityCard(String identityCard);
-
-//    boolean existsByPhoneNumber(String phoneNumber);
 
     boolean existsByEmail(String email);
 
@@ -34,10 +29,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select u from User u join fetch u.role where u.username = :username")
     User findByUsernameWithRole(@Param("username") String username);
-
-//    User findByIdentityCard(String identityCard);
-//
-//    User findByPhoneNumber(String phoneNumber);
 
     User findByEmail(String email);
 

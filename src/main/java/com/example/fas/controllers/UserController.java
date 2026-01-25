@@ -42,26 +42,28 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserById(@PathVariable Long id) {
-        var response = new ApiResponse<>(HttpStatus.OK, "User retrieved successfully", userServiceImpl.getUserById(id), null);
+        var response = new ApiResponse<>(HttpStatus.OK, "User retrieved successfully", userServiceImpl.getUserById(id),
+                null);
         return ResponseEntity.ok(response);
     }
 
     /**
      * Tạo mới user
-     *
+     * 
      * @param userRequest - Thông tin user cần tạo
      * @return ResponseEntity - Trả về user đã được tạo
      */
     @PostMapping("/")
     public ResponseEntity<ApiResponse<UserResponseDto>> createUser(@RequestBody UserRequestDto userRequest) {
         UserResponseDto createdUser = userServiceImpl.createUser(userRequest);
-        ApiResponse<UserResponseDto> response = new ApiResponse<>(HttpStatus.CREATED, "User created successfully", createdUser, null);
+        ApiResponse<UserResponseDto> response = new ApiResponse<>(HttpStatus.CREATED, "User created successfully",
+                createdUser, null);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
      * Lấy tất cả user đã phân trang
-     *
+     * 
      * @param pageable - Phân trang
      * @return ResponseEntity Trả về danh sách user đã phân trang
      */
@@ -81,14 +83,13 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-
     /**
      * This function updates user information based on the provided user update
      * request.
-     *
+     * 
      * @param id The user update request containing updated user information.
      * @return A ResponseEntity containing an ApiResponse with the updated user
-     * information.
+     *         information.
      */
     @PutMapping("/is-admin/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> isAdmin(@PathVariable Long id) {
@@ -102,7 +103,7 @@ public class UserController {
      *
      * @param id The ID of the user to be updated.
      * @return A ResponseEntity containing an ApiResponse with the updated user
-     * information.
+     *         information.
      */
     @PutMapping("/is-user/{id}")
     public ResponseEntity<ApiResponse<UserResponseDto>> isUser(@PathVariable Long id) {
@@ -144,7 +145,8 @@ public class UserController {
      */
     @GetMapping("/full-name/{fullName}")
     public ResponseEntity<ApiResponse<UserResponseDto>> getUserByFullName(@PathVariable String fullName) {
-        var response = new ApiResponse<>(HttpStatus.OK, "User retrieved successfully", userServiceImpl.getUserByFullName(fullName), null);
+        var response = new ApiResponse<>(HttpStatus.OK, "User retrieved successfully",
+                userServiceImpl.getUserByFullName(fullName), null);
         return ResponseEntity.ok(response);
     }
 
@@ -156,10 +158,12 @@ public class UserController {
      * @return ResponseEntity containing current user information
      */
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserResponseDto>> getCurrentUserFromToken(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<ApiResponse<UserResponseDto>> getCurrentUserFromToken(
+            @RequestHeader("Authorization") String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Missing or invalid Authorization header", null, null));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(HttpStatus.UNAUTHORIZED,
+                        "Missing or invalid Authorization header", null, null));
             }
 
             String token = authHeader.substring(7);
@@ -173,7 +177,8 @@ public class UserController {
             var apiResponse = ApiResponse.success("Current user fetched successfully.", currentUser);
             return ResponseEntity.ok(apiResponse);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Invalid or expired token", null, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>(HttpStatus.UNAUTHORIZED, "Invalid or expired token", null, e.getMessage()));
         }
     }
 
@@ -191,18 +196,33 @@ public class UserController {
     }
 
     @PutMapping("/change-password")
-    public ResponseEntity<ApiResponse<UserResponseDto>> changePassword(@Valid @RequestBody ChangePassword changePassword) {
+    public ResponseEntity<ApiResponse<UserResponseDto>> changePassword(
+            @Valid @RequestBody ChangePassword changePassword) {
         try {
             UserResponseDto userDto = userServiceImpl.changePassword(changePassword);
             if (userDto == null) {
-                var response = new ApiResponse<UserResponseDto>(HttpStatus.BAD_REQUEST, "Old password is incorrect", null, null);
+                var response = new ApiResponse<UserResponseDto>(HttpStatus.BAD_REQUEST, "Old password is incorrect",
+                        null, null);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
-                var response = new ApiResponse<>(HttpStatus.OK, "Password changed successfully", userDto, null);
-                return ResponseEntity.ok(response);
+            var response = new ApiResponse<>(HttpStatus.OK, "Password changed successfully", userDto, null);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            var response = new ApiResponse<UserResponseDto>(HttpStatus.INTERNAL_SERVER_ERROR, "An error occurred while changing the password", null, e.getMessage());
+            var response = new ApiResponse<UserResponseDto>(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "An error occurred while changing the password", null, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    /**
+     * Count total users in the system
+     *
+     * @return ResponseEntity containing the total number of users
+     */
+    @GetMapping("/count")
+    public ResponseEntity<ApiResponse<Long>> countUsers() {
+        Long count = userServiceImpl.countUsers();
+        var response = new ApiResponse<>(HttpStatus.OK, "Count users retrieved successfully", count, null);
+        return ResponseEntity.ok(response);
     }
 }

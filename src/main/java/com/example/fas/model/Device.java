@@ -45,7 +45,7 @@ public class Device {
     private User user;
 
     // 2. Ngưỡng an toàn/cảnh báo/nguy cấp cho cảm biến khói (MQ2)
-    private Double safetyThreshold;
+    private Double safetyThreshold; // Ngưỡng an toàn
 
     private Double warningThreshold; // Ngưỡng cảnh báo
 
@@ -56,7 +56,6 @@ public class Device {
     @JsonIgnore
     private DeviceStatus status;
 
-    // 4. Thời gian lần cuối thiết bị gửi tin (Heartbeat)
     // Dùng để phát hiện thiết bị bị mất điện hoặc mất Wifi
     private Instant lastActiveTime;
 

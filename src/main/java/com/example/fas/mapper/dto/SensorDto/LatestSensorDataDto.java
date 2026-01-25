@@ -1,6 +1,5 @@
 package com.example.fas.mapper.dto.SensorDto;
 
-import com.example.fas.model.enums.TypeSensor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -30,6 +30,10 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
             @Param("deviceId") Long deviceId,
             @Param("startTime") Instant startTime,
             @Param("endTime") Instant endTime);
+
+    // Lấy timestamp mới nhất của dữ liệu cảm biến của thiết bị
+    @Query("SELECT MAX(s.timestamp) FROM SensorData s WHERE s.device.id = :deviceId")
+    Instant findLatestTimestampByDeviceId(@Param("deviceId") Long deviceId);
     
     // Lấy dữ liệu mới nhất của một thiết bị theo loại cảm biến
     SensorData findFirstByDeviceIdAndTypeSensorOrderByTimestampDesc(

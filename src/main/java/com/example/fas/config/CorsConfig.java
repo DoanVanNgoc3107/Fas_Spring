@@ -14,27 +14,25 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000", // Local development
-                "https://your-production-domain.com", // Production domain
-                "http://localhost:63342"
-        ));
+                "https://doanvanngoc3107.store"));
 
         // Cho phép ...
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
 
-        // ✅ Cho phép headers - SỬA: dùng setAllowedHeaders() thay vì addAllowedHeader()
+        // Cho phép tất cả headers
         configuration.setAllowedHeaders(List.of("*"));
 
-        // ✅ Cho phép credentials (cookies, authorization headers)
+        // (cookies, authorization headers)
         configuration.setAllowCredentials(true);
 
-        // ✅ Cache preflight requests for 1 hour
+        // Cache preflight requests for 1 hour
         configuration.setMaxAge(3600L);
 
-        // ✅ Apply CORS to all endpoints
+        // Apply CORS to all endpoints
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

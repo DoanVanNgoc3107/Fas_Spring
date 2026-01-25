@@ -64,6 +64,7 @@ public class User {
     // Mỗi user có thể chứa nhiều thiết bị
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @ToString.Exclude
+    @JsonIgnore
     private Set<Device> devices = new HashSet<>();
 
     // Timestamp of creation

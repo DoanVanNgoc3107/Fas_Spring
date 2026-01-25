@@ -42,8 +42,8 @@ public class SecurityConfig {
 
     private static final String[] WEB_PUBLIC_ENDPOINTS = {
             "/",
-            "/login",
-            "/login/**",           // Include OAuth2 callback paths
+            "/auth/login",
+            "/auth/login/**",           // Include OAuth2 callback paths
             "/oauth2/**",
             "/error",
             "/css/**",
@@ -120,13 +120,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .formLogin(Customizer.withDefaults())
                 .oauth2Login(oauth2 -> oauth2
-                .loginPage("/login")
+                .loginPage("/auth/login")
                 .defaultSuccessUrl("/", true)
-                .failureUrl("/login?error")
+                .failureUrl("/auth/login?error")
                 .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService)))
                         .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")
+                        .logoutSuccessUrl("/auth/login?logout")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true));
         return http.build();

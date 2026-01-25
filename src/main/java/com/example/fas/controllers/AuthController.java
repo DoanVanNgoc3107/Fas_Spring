@@ -47,6 +47,10 @@ public class AuthController {
         this.authenticationManager = authenticationManager;
     }
 
+    /**
+     * Handles user login requests by validating the provided credentials and generating JWT tokens.
+     *
+     */
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
         try {

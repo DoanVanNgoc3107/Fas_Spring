@@ -683,5 +683,16 @@ public class UserServiceImpl implements UserService {
 
         return userMapper.toDto(user);
     }
+
+
+    /**
+     * This function counts the total number of users.
+     *
+     * @return Long - The total number of users.
+     */
+    @Override
+    public Long countUsers() {
+        return userRepository.count();
+    }
 }
 

@@ -3,11 +3,15 @@ package com.example.fas.controllers;
 import com.example.fas.mapper.dto.SensorDto.LatestSensorDataDto;
 import com.example.fas.mapper.dto.SensorDto.SensorDataRequestDto;
 import com.example.fas.mapper.dto.SensorDto.SensorDataResponseDto;
+import com.example.fas.mapper.dto.deviceDto.UpdateDevice;
 import com.example.fas.mapper.dto.deviceDto.DeviceResponseDto;
 import com.example.fas.mapper.dto.deviceDto.RegisterDevice;
+import com.example.fas.mapper.dto.deviceDto.ThresholdResponse;
+import com.example.fas.mapper.dto.deviceDto.ThresholdUpdateRequest;
 import com.example.fas.model.ApiResponse;
 import com.example.fas.model.enums.TypeSensor;
 import com.example.fas.repositories.services.serviceImpl.DeviceServiceImpl;
+import com.example.fas.repositories.services.serviceImpl.Esp32CommunicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,20 +33,11 @@ import java.util.List;
 public class DeviceController {
 
     private final DeviceServiceImpl deviceService;
-
-    /**
-     * Kiểm tra trạng thái kết nối của thiết bị
-     *
-     * @param deviceCode Mã thiết bị
-     */
-    @PostMapping("/test-connection/{deviceCode}")
-    public ResponseEntity<ApiResponse<String>> testConnection(@Valid @PathVariable String deviceCode) {
-        return ResponseEntity.ok(ApiResponse.success("Kết nối thành công", null));
-    }
+    private final Esp32CommunicationService esp32Service;
 
     /**
      * Lấy thông tin của thiết bị theo ID
-     *
+     * 
      * @param id ID thiết bị
      */
     @GetMapping("/{id}")
@@ -52,11 +47,69 @@ public class DeviceController {
                     HttpStatus.OK,
                     "Lấy thông tin thiết bị thành công.!",
                     deviceService.getDeviceById(id),
-                    null
-            );
+                    null);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.ok(ApiResponse.error("Lấy thiết bị thất bại: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Lấy thông tin của thiết bị dựa vào mã thiết bị
+     * 
+     * @param deviceCode Mã thiết bị
+     * @return Thông tin thiết bị
+     */
+    @GetMapping("/code/{deviceCode}")
+    public ResponseEntity<ApiResponse<DeviceResponseDto>> getDeviceByCode(@PathVariable String deviceCode) {
+        try {
+            var response = new ApiResponse<>(
+                    HttpStatus.OK,
+                    "Lấy thông tin thiết bị thành công.!",
+                    deviceService.getDeviceByCode(deviceCode),
+                    null);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error("Lấy thiết bị thất bại: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Lấy danh sách tất cả thiết bị
+     * 
+     * @return Danh sách thiết bị
+     */
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse<List<DeviceResponseDto>>> getAllDevices() {
+        try {
+            var response = new ApiResponse<>(
+                    HttpStatus.OK,
+                    "Lấy danh sách thiết bị thành công.!",
+                    deviceService.getAllDevices(),
+                    null);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error("Lấy danh sách thiết bị thất bại: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Lấy danh sách thiết bị của user
+     * 
+     * @param userId ID của user
+     * @return Danh sách thiết bị của user
+     */
+    @GetMapping("/list/user/{userId}")
+    public ResponseEntity<ApiResponse<List<DeviceResponseDto>>> getDevicesByUserId(@PathVariable Long userId) {
+        try {
+            var response = new ApiResponse<>(
+                    HttpStatus.OK,
+                    "Lấy danh sách thiết bị của user thành công.!",
+                    deviceService.getDevicesByUserId(userId),
+                    null);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error("Lấy danh sách thiết bị thất bại: " + e.getMessage(), null));
         }
     }
 
@@ -140,10 +193,8 @@ public class DeviceController {
         return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
     }
 
-
     /**
      * Lấy dữ liệu cảm biến gần đây nhất (ví dụ: 10 bản ghi gần nhất)
-     *
      */
     @GetMapping("/{id}/recent")
     public ResponseEntity<ApiResponse<List<SensorDataResponseDto>>> getRecentSensorData(
@@ -152,7 +203,6 @@ public class DeviceController {
         List<SensorDataResponseDto> data = deviceService.getRecentSensorData(id);
         return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
     }
-
 
     @GetMapping("/{id}/sensor-data/last")
     public ResponseEntity<ApiResponse<List<SensorDataResponseDto>>> getSensorDataLastHours(
@@ -184,5 +234,90 @@ public class DeviceController {
         List<SensorDataResponseDto> data = deviceService.getSensorDataByTimeRange(id, afterTimestamp, endTime);
 
         return ResponseEntity.ok(ApiResponse.success("Lấy dữ liệu thành công", data));
+    }
+
+    // ==================== ESP32 THRESHOLD MANAGEMENT ====================
+
+    /**
+     * Cập nhật ngưỡng cảnh báo cho thiết bị ESP32
+     * Server gửi request xuống ESP32 để cập nhật threshold
+     * 
+     * @param id      ID của thiết bị
+     * @param request Thông tin ngưỡng mới (safety, warning, danger)
+     * @return Kết quả cập nhật từ ESP32
+     */
+    @PutMapping("/{id}/threshold")
+    public ResponseEntity<ApiResponse<ThresholdResponse>> updateThreshold(
+            @PathVariable Long id,
+            @Valid @RequestBody ThresholdUpdateRequest request) {
+        try {
+            ThresholdResponse response = esp32Service.updateThreshold(id, request);
+            return ResponseEntity.ok(ApiResponse.success("Cập nhật ngưỡng thành công", response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Dữ liệu không hợp lệ: " + e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.error("Không thể kết nối với ESP32: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Lấy ngưỡng hiện tại từ ESP32
+     * 
+     * @param id ID của thiết bị
+     * @return Thông tin ngưỡng hiện tại trên ESP32
+     */
+    @GetMapping("/{id}/threshold")
+    public ResponseEntity<ApiResponse<ThresholdResponse>> getThreshold(@PathVariable Long id) {
+        try {
+            ThresholdResponse response = esp32Service.getThresholdFromDevice(id);
+            return ResponseEntity.ok(ApiResponse.success("Lấy ngưỡng thành công", response));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.error("Không thể kết nối với ESP32: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Kiểm tra kết nối với ESP32
+     * 
+     * @param id ID của thiết bị
+     * @return true nếu ESP32 đang online
+     */
+    @GetMapping("/{id}/health")
+    public ResponseEntity<ApiResponse<Boolean>> checkDeviceHealth(@PathVariable Long id) {
+        try {
+            boolean isOnline = esp32Service.healthCheck(id);
+            String message = isOnline ? "ESP32 đang hoạt động" : "ESP32 không phản hồi";
+            return ResponseEntity.ok(ApiResponse.success(message, isOnline));
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error("Lỗi kiểm tra: " + e.getMessage(), false));
+        }
+    }
+
+    /**
+     * Cập nhật thông tin thiết bị
+     * @param request Thông tin cập nhật thiết bị
+     */
+    @PutMapping("/update-info")
+    public ResponseEntity<ApiResponse<DeviceResponseDto>> updateDeviceInfo(
+            @Valid @RequestBody UpdateDevice request) {
+        try {
+            DeviceResponseDto updatedDevice = deviceService.updateDevice(request);
+            return ResponseEntity.ok(ApiResponse.success("Cập nhật thông tin thiết bị thành công", updatedDevice));
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error("Cập nhật thông tin thiết bị thất bại: " + e.getMessage(), null));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteDevice(@PathVariable Long id) {
+        try {
+            deviceService.deleteDevice(id);
+            return ResponseEntity.ok(ApiResponse.success("Xóa thiết bị thành công", null));
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.error("Xóa thiết bị thất bại: " + e.getMessage(), null));
+        }
     }
 }
