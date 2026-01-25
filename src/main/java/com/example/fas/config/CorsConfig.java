@@ -19,6 +19,8 @@ public class CorsConfig {
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*", // Local development (any port)
                 "https://doanvanngoc3107.store",
+                "https://www.doanvanngoc3107.store", // With www subdomain
+                "https://*.doanvanngoc3107.store", // All subdomains
                 "https://*.vercel.app", // All Vercel deployments
                 "https://fas-*.vercel.app" // Specific pattern for FAS frontend
         ));
