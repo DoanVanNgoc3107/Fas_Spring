@@ -1,5 +1,6 @@
 package com.example.fas.controllers;
 
+import com.example.fas.config.websocket.ESP32WebSocketHandler;
 import com.example.fas.mapper.dto.SensorDto.LatestSensorDataDto;
 import com.example.fas.mapper.dto.SensorDto.SensorDataRequestDto;
 import com.example.fas.mapper.dto.SensorDto.SensorDataResponseDto;
@@ -14,6 +15,7 @@ import com.example.fas.repositories.services.serviceImpl.DeviceServiceImpl;
 import com.example.fas.repositories.services.serviceImpl.Esp32CommunicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/devices")
 @RequiredArgsConstructor
@@ -34,6 +37,7 @@ public class DeviceController {
 
     private final DeviceServiceImpl deviceService;
     private final Esp32CommunicationService esp32Service;
+    private final ESP32WebSocketHandler webSocketHandler;
 
     /**
      * Lấy thông tin của thiết bị theo ID
@@ -323,14 +327,35 @@ public class DeviceController {
 
     /**
      * Kích hoạt cảnh báo khẩn cấp - đưa ESP32 về trạng thái NGUY HIỂM
+     * Ưu tiên sử dụng WebSocket, fallback về HTTP nếu device không online
      * @param id ID của thiết bị
      */
     @PostMapping("/{id}/alert/trigger")
     public ResponseEntity<ApiResponse<String>> triggerAlert(@PathVariable Long id) {
         try {
+            // Lấy device để kiểm tra deviceCode
+            var device = deviceService.getDeviceById(id);
+            String deviceCode = device.getDeviceCode();
+            
+            // Thử gửi qua WebSocket trước
+            if (webSocketHandler.isDeviceOnline(deviceCode)) {
+                log.info("Device {} is online via WebSocket, sending alert via WebSocket", deviceCode);
+                boolean sent = webSocketHandler.sendTriggerAlert(deviceCode);
+                if (sent) {
+                    return ResponseEntity.ok(ApiResponse.success(
+                        "Kích hoạt cảnh báo khẩn cấp thành công qua WebSocket", 
+                        "Alert sent via WebSocket"));
+                }
+            }
+            
+            // Fallback về HTTP nếu WebSocket không khả dụng
+            log.info("Device {} not online via WebSocket, falling back to HTTP", deviceCode);
             String result = esp32Service.triggerEmergencyAlert(id);
-            return ResponseEntity.ok(ApiResponse.success("Kích hoạt cảnh báo khẩn cấp thành công", result));
+            return ResponseEntity.ok(ApiResponse.success(
+                "Kích hoạt cảnh báo khẩn cấp thành công qua HTTP", result));
+                
         } catch (Exception e) {
+            log.error("Failed to trigger alert: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(ApiResponse.error("Không thể kích hoạt cảnh báo: " + e.getMessage(), null));
         }
@@ -338,14 +363,35 @@ public class DeviceController {
 
     /**
      * Reset cảnh báo - đưa hệ thống về trạng thái ban đầu
+     * Ưu tiên sử dụng WebSocket, fallback về HTTP nếu device không online
      * @param id ID của thiết bị
      */
     @PostMapping("/{id}/alert/reset")
     public ResponseEntity<ApiResponse<String>> resetAlert(@PathVariable Long id) {
         try {
+            // Lấy device để kiểm tra deviceCode
+            var device = deviceService.getDeviceById(id);
+            String deviceCode = device.getDeviceCode();
+            
+            // Thử gửi qua WebSocket trước
+            if (webSocketHandler.isDeviceOnline(deviceCode)) {
+                log.info("Device {} is online via WebSocket, sending reset via WebSocket", deviceCode);
+                boolean sent = webSocketHandler.sendResetAlert(deviceCode);
+                if (sent) {
+                    return ResponseEntity.ok(ApiResponse.success(
+                        "Reset cảnh báo thành công qua WebSocket", 
+                        "Reset sent via WebSocket"));
+                }
+            }
+            
+            // Fallback về HTTP nếu WebSocket không khả dụng
+            log.info("Device {} not online via WebSocket, falling back to HTTP", deviceCode);
             String result = esp32Service.resetAlert(id);
-            return ResponseEntity.ok(ApiResponse.success("Reset cảnh báo thành công", result));
+            return ResponseEntity.ok(ApiResponse.success(
+                "Reset cảnh báo thành công qua HTTP", result));
+                
         } catch (Exception e) {
+            log.error("Failed to reset alert: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(ApiResponse.error("Không thể reset cảnh báo: " + e.getMessage(), null));
         }
