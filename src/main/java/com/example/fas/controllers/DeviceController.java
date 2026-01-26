@@ -320,4 +320,34 @@ public class DeviceController {
             return ResponseEntity.ok(ApiResponse.error("Xóa thiết bị thất bại: " + e.getMessage(), null));
         }
     }
+
+    /**
+     * Kích hoạt cảnh báo khẩn cấp - đưa ESP32 về trạng thái NGUY HIỂM
+     * @param id ID của thiết bị
+     */
+    @PostMapping("/{id}/alert/trigger")
+    public ResponseEntity<ApiResponse<String>> triggerAlert(@PathVariable Long id) {
+        try {
+            String result = esp32Service.triggerEmergencyAlert(id);
+            return ResponseEntity.ok(ApiResponse.success("Kích hoạt cảnh báo khẩn cấp thành công", result));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.error("Không thể kích hoạt cảnh báo: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Reset cảnh báo - đưa hệ thống về trạng thái ban đầu
+     * @param id ID của thiết bị
+     */
+    @PostMapping("/{id}/alert/reset")
+    public ResponseEntity<ApiResponse<String>> resetAlert(@PathVariable Long id) {
+        try {
+            String result = esp32Service.resetAlert(id);
+            return ResponseEntity.ok(ApiResponse.success("Reset cảnh báo thành công", result));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.error("Không thể reset cảnh báo: " + e.getMessage(), null));
+        }
+    }
 }

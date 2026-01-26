@@ -75,14 +75,14 @@ public class AuthController {
         } catch (BadCredentialsException | LoginFailedException ex) {
             var errorResponse = new ApiResponse<LoginResponseDto>(
                     HttpStatus.UNAUTHORIZED,
-                    "Login failed",
+                    "Tên đăng nhập hoặc mật khẩu không đúng",
                     null,
                     ex.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         } catch (AuthenticationException ex) {
             var errorResponse = new ApiResponse<LoginResponseDto>(
                     HttpStatus.UNAUTHORIZED,
-                    "Authentication failed",
+                    "Xác thực không thành công",
                     null,
                     Map.of("reason", ex.getMessage()));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);

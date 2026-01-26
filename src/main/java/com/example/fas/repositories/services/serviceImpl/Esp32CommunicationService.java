@@ -165,4 +165,93 @@ public class Esp32CommunicationService {
             throw new IllegalArgumentException("Ngưỡng cảnh báo phải nhỏ hơn ngưỡng nguy hiểm");
         }
     }
+
+    /**
+     * Kích hoạt cảnh báo khẩn cấp - đưa ESP32 về trạng thái NGUY HIỂM
+     * ESP32 sẽ kích hoạt còi, đèn cảnh báo và gửi thông báo
+     * 
+     * @param deviceId ID của thiết bị
+     * @return Kết quả từ ESP32
+     */
+    public String triggerEmergencyAlert(Long deviceId) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thiết bị với ID: " + deviceId));
+
+        if (device.getIpV4Address() == null || device.getIpV4Address().isEmpty()) {
+            throw new RuntimeException("Thiết bị chưa có địa chỉ IP");
+        }
+
+        String esp32Url = "http://" + device.getIpV4Address() + ":8080/api/alert/trigger";
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(esp32ApiToken);
+
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            log.info("Triggering emergency alert for device {} at {}", device.getDeviceCode(), esp32Url);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    esp32Url,
+                    HttpMethod.POST,
+                    entity,
+                    String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Emergency alert triggered successfully for device {}", device.getDeviceCode());
+                return "Cảnh báo khẩn cấp đã được kích hoạt";
+            } else {
+                throw new RuntimeException("ESP32 trả về mã lỗi: " + response.getStatusCode());
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to trigger alert for device {}: {}", device.getDeviceCode(), e.getMessage());
+            throw new RuntimeException("Không thể kích hoạt cảnh báo: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Reset cảnh báo - đưa hệ thống về trạng thái ban đầu
+     * 
+     * @param deviceId ID của thiết bị
+     * @return Kết quả từ ESP32
+     */
+    public String resetAlert(Long deviceId) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thiết bị với ID: " + deviceId));
+
+        if (device.getIpV4Address() == null || device.getIpV4Address().isEmpty()) {
+            throw new RuntimeException("Thiết bị chưa có địa chỉ IP");
+        }
+
+        String esp32Url = "http://" + device.getIpV4Address() + "/api/alert/reset";
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(esp32ApiToken);
+
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+            log.info("Resetting alert for device {} at {}", device.getDeviceCode(), esp32Url);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    esp32Url,
+                    HttpMethod.POST,
+                    entity,
+                    String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Alert reset successfully for device {}", device.getDeviceCode());
+                return "Cảnh báo đã được reset";
+            } else {
+                throw new RuntimeException("ESP32 trả về mã lỗi: " + response.getStatusCode());
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to reset alert for device {}: {}", device.getDeviceCode(), e.getMessage());
+            throw new RuntimeException("Không thể reset cảnh báo: " + e.getMessage());
+        }
+    }
 }
