@@ -225,7 +225,7 @@ public class Esp32CommunicationService {
             throw new RuntimeException("Thiết bị chưa có địa chỉ IP");
         }
 
-        String esp32Url = "http://" + device.getIpV4Address() + "/api/alert/reset";
+        String esp32Url = "http://" + device.getIpV4Address() + ":8080/api/alert/reset";
 
         try {
             HttpHeaders headers = new HttpHeaders();
