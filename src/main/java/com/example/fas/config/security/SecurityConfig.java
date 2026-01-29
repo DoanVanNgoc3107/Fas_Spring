@@ -33,10 +33,12 @@ public class SecurityConfig {
     private static final String[] API_PUBLIC_ENDPOINTS = {
             "/api/v1/auth/**",
             "/api/v1/oauth2/**",  // OAuth2 redirect endpoints
+            "/api/v1/commands/**", // ESP32 polling endpoint
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/api/v1/roles/**",
+            "/api/v1/devices/**",
             "/api/v1/users/change-password"  // Allow password change without authentication
     };
 

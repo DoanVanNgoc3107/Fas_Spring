@@ -59,6 +59,11 @@ public class DeviceServiceImpl {
         device.setLastActiveTime(Instant.now());
         device.setStatus(DeviceStatus.ACTIVE);
 
+        // 2.1. Cập nhật địa chỉ IP của ESP32 nếu có (quan trọng cho two-way communication)
+        if (request.getIpV4Address() != null && !request.getIpV4Address().trim().isEmpty()) {
+            device.setIpV4Address(request.getIpV4Address().trim());
+        }
+
         // 3. Lưu dữ liệu cảm biến vào bảng history (SensorData)
         SensorData sensorData = SensorData.builder()
                 .device(device)

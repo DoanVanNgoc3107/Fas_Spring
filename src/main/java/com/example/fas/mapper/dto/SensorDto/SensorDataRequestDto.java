@@ -17,4 +17,7 @@ public class SensorDataRequestDto {
 
     @NotNull(message = "TypeSensor must not be null")
     private TypeSensor typeSensor;
+
+    // IP address from ESP32 for two-way communication
+    private String ipV4Address;
 }

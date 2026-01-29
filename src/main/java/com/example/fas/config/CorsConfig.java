@@ -22,7 +22,10 @@ public class CorsConfig {
                 "https://www.doanvanngoc3107.store", // With www subdomain
                 "https://*.doanvanngoc3107.store", // All subdomains
                 "https://*.vercel.app", // All Vercel deployments
-                "https://fas-*.vercel.app" // Specific pattern for FAS frontend
+                "https://fas-*.vercel.app", // Specific pattern for FAS frontend
+                "http://172.20.10.2:3000",
+                // Allow the IP with any port (useful for mobile/containers that use a different port)
+                "http://172.20.10.2:*"
         ));
 
         // Cho phép ...
